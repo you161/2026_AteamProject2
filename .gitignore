@@ -73,3 +73,9 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+/AteamProject/Saved/
+/AteamProject/Intermediate/
+
+!UnrealEditor-AteamProject.dll
+*.pdb
