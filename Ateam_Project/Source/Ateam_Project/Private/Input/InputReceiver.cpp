@@ -11,12 +11,7 @@ void AInputReceiver::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InputManager = NewObject<UInputManager>(this);
-
-	if (InputManager == nullptr)
-	{
-		return;
-	}
+	GetInputManager();
 
 	ULocalPlayer* LocalPlayer = GetLocalPlayer();
 
@@ -45,12 +40,17 @@ void AInputReceiver::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	UEnhancedInputComponent* EnhancedInputComponent =
-		Cast<UEnhancedInputComponent>(InputComponent);
+	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
 
 	if (EnhancedInputComponent == nullptr)
 	{
+		UE_LOG(LogTemp, Error, TEXT("InputComponent is not EnhancedInputComponent."));
 		return;
+	}
+
+	if (MoveAction == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MoveAction is not set. Use a Blueprint subclass of InputReceiver."));
 	}
 
 	if (MoveAction != nullptr)
@@ -58,6 +58,20 @@ void AInputReceiver::SetupInputComponent()
 		EnhancedInputComponent->BindAction(
 			MoveAction,
 			ETriggerEvent::Triggered,
+			this,
+			&AInputReceiver::Move
+		);
+
+		EnhancedInputComponent->BindAction(
+			MoveAction,
+			ETriggerEvent::Completed,
+			this,
+			&AInputReceiver::Move
+		);
+
+		EnhancedInputComponent->BindAction(
+			MoveAction,
+			ETriggerEvent::Canceled,
 			this,
 			&AInputReceiver::Move
 		);
@@ -71,6 +85,13 @@ void AInputReceiver::SetupInputComponent()
 			this,
 			&AInputReceiver::Jump
 		);
+
+		EnhancedInputComponent->BindAction(
+			JumpAction,
+			ETriggerEvent::Completed,
+			this,
+			&AInputReceiver::JumpReleased
+		);
 	}
 }
 
@@ -83,10 +104,18 @@ void AInputReceiver::Move(const FInputActionValue& Value)
 
 	const FVector2D MoveInput = Value.Get<FVector2D>();
 
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("InputReceiver Move: X=%f, Y=%f"),
+		MoveInput.X,
+		MoveInput.Y
+	);
+
 	InputManager->SetMoveInput(MoveInput);
 }
 
-void AInputReceiver::Jump(const FInputActionValue& Value)
+void AInputReceiver::Jump()
 {
 	if (InputManager == nullptr)
 	{
@@ -94,4 +123,26 @@ void AInputReceiver::Jump(const FInputActionValue& Value)
 	}
 
 	InputManager->SetJumpPressed(true);
+}
+
+void AInputReceiver::JumpReleased()
+{
+	if (InputManager == nullptr)
+	{
+		return;
+	}
+
+	InputManager->SetJumpPressed(false);
+}
+
+UInputManager* AInputReceiver::GetInputManager()
+{
+	if (InputManager == nullptr)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("InputManager is null in GetInputManager."));
+
+		InputManager = NewObject<UInputManager>(this);
+	}
+
+	return InputManager;
 }

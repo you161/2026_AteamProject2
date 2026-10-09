@@ -19,7 +19,7 @@ public:
 	FVector2D GetMoveInput() const;
 
 	void SetJumpPressed(bool bPressed);
-	bool IsJumpPressed();
+	bool IsJumpPressed() const;
 
 private:
 	FVector2D MoveInput = FVector2D::ZeroVector;

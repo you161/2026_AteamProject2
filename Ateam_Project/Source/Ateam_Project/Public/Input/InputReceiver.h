@@ -20,6 +20,7 @@ class ATEAM_PROJECT_API AInputReceiver : public APlayerController
 
 public:
 	AInputReceiver();
+	UInputManager* GetInputManager();
 
 protected:
 	virtual void BeginPlay() override;
@@ -39,9 +40,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> JumpAction = nullptr;
 
-	UPROPERTY()
+	UPROPERTY(Transient)
 	TObjectPtr<UInputManager> InputManager = nullptr;
 
 	void Move(const FInputActionValue& Value);
-	void Jump(const FInputActionValue& Value);
+	void Jump();
+	void JumpReleased();
 };
