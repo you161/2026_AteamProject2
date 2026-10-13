@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -20,7 +19,9 @@ class ATEAM_PROJECT_API AInputReceiver : public APlayerController
 
 public:
 	AInputReceiver();
-	UInputManager* GetInputManager();
+
+	//InputManagerを取得する(コンストラクタで生成済みのため、常に有効な値を返す)
+	UInputManager* GetInputManager() const { return InputManager; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -40,7 +41,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> JumpAction = nullptr;
 
-	UPROPERTY(Transient)
+	//入力管理(コンストラクタでサブオブジェクトとして生成する)
+	UPROPERTY(VisibleAnywhere, Transient, Category = "Input")
 	TObjectPtr<UInputManager> InputManager = nullptr;
 
 	void Move(const FInputActionValue& Value);

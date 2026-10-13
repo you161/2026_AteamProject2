@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,7 +6,6 @@
 
 class UInputManager;
 class UPlayerData;
-class AActor;
 
 /**
  * 入力の値を受け取り、プレイヤーの移動やジャンプの状態を管理するクラス
@@ -25,7 +23,11 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	//コントローラーがPossessしたときに呼ばれる
 	virtual void PossessedBy(AController* NewController) override;
+
+	//コントローラーがUnPossessしたときに呼ばれる
+	virtual void UnPossessed() override;
 
 	void InitializeInputManager();
 
@@ -41,8 +43,8 @@ protected:
 	TObjectPtr<AActor> Camera = nullptr;
 
 private:
-	UPROPERTY()
-	UInputManager* InputManager = nullptr;
+	UPROPERTY(Transient)
+	TObjectPtr<UInputManager> InputManager = nullptr;
 
-	FVector3d CurrentDirection = FVector3d::ZeroVector;
+	FVector CurrentDirection = FVector::ZeroVector;
 };

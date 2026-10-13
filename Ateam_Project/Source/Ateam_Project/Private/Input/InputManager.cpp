@@ -6,14 +6,6 @@ UInputManager::UInputManager(){}
 void UInputManager::SetMoveInput(const FVector2D& Input)
 {
     MoveInput = Input;
-
-    UE_LOG(
-        LogTemp,
-        Warning,
-        TEXT("InputManager: X=%f, Y=%f"),
-        MoveInput.X,
-        MoveInput.Y
-    );
 }
 
 void UInputManager::SetJumpPressed(bool bPressed)

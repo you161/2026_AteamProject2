@@ -1,17 +1,18 @@
-
 #include "Input/InputReceiver.h"
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Input/InputManager.h"
 
-AInputReceiver::AInputReceiver(){}
+AInputReceiver::AInputReceiver()
+{
+	//コントローラーが存在する時点でInputManagerも必ず存在するようにする
+	InputManager = CreateDefaultSubobject<UInputManager>(TEXT("InputManager"));
+}
 
 void AInputReceiver::BeginPlay()
 {
 	Super::BeginPlay();
-
-	GetInputManager();
 
 	ULocalPlayer* LocalPlayer = GetLocalPlayer();
 
@@ -30,6 +31,7 @@ void AInputReceiver::BeginPlay()
 
 	if (InputMappingContext == nullptr)
 	{
+		UE_LOG(LogTemp, Error, TEXT("InputMappingContext is not set in InputReceiver."));
 		return;
 	}
 
@@ -50,10 +52,9 @@ void AInputReceiver::SetupInputComponent()
 
 	if (MoveAction == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("MoveAction is not set. Use a Blueprint subclass of InputReceiver."));
+		UE_LOG(LogTemp, Error, TEXT("MoveAction is not set in InputReceiver."));
 	}
-
-	if (MoveAction != nullptr)
+	else
 	{
 		EnhancedInputComponent->BindAction(
 			MoveAction,
@@ -102,17 +103,7 @@ void AInputReceiver::Move(const FInputActionValue& Value)
 		return;
 	}
 
-	const FVector2D MoveInput = Value.Get<FVector2D>();
-
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("InputReceiver Move: X=%f, Y=%f"),
-		MoveInput.X,
-		MoveInput.Y
-	);
-
-	InputManager->SetMoveInput(MoveInput);
+	InputManager->SetMoveInput(Value.Get<FVector2D>());
 }
 
 void AInputReceiver::Jump()
@@ -133,16 +124,4 @@ void AInputReceiver::JumpReleased()
 	}
 
 	InputManager->SetJumpPressed(false);
-}
-
-UInputManager* AInputReceiver::GetInputManager()
-{
-	if (InputManager == nullptr)
-	{
-		UE_LOG(LogTemp,Warning,TEXT("InputManager is null in GetInputManager."));
-
-		InputManager = NewObject<UInputManager>(this);
-	}
-
-	return InputManager;
 }
