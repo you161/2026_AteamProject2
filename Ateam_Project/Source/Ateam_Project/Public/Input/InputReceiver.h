@@ -41,6 +41,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> JumpAction = nullptr;
 
+	//マウス入力
+	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> LookAction = nullptr;
+
 	//入力管理(コンストラクタでサブオブジェクトとして生成する)
 	UPROPERTY(VisibleAnywhere, Transient, Category = "Input")
 	TObjectPtr<UInputManager> InputManager = nullptr;
@@ -48,4 +52,5 @@ private:
 	void Move(const FInputActionValue& Value);
 	void Jump();
 	void JumpReleased();
+	void Look(const FInputActionValue& Value);
 };
