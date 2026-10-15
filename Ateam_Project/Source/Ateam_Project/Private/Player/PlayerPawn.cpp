@@ -24,6 +24,11 @@ void APlayerPawn::BeginPlay()
 
 	//BeginPlay時点ですでにPossessされている場合に備える
 	InitializeInputManager();
+
+	CurrentDirection = FVector::ZeroVector;
+	CurrentCameraForward = Camera->GetActorForwardVector();
+	CurrentCameraRight = Camera->GetActorRightVector();
+	isMoving = false;
 }
 
 void APlayerPawn::Tick(float DeltaTime)
@@ -45,21 +50,32 @@ void APlayerPawn::Move(float DeltaTime)
 {
 	const FVector2D MoveInput = InputManager->GetMoveInput();
 
-	FVector Forward = Camera->GetActorForwardVector();
-	FVector Right = Camera->GetActorRightVector();
-	Forward.Z = 0.0f;
-	Right.Z = 0.0f;
-	Forward.Normalize();
-	Right.Normalize();
+	if (!isMoving)
+	{
+		//移動中じゃないときはカメラの向きを更新する
+		CurrentCameraForward = Camera->GetActorForwardVector();
+		CurrentCameraRight = Camera->GetActorRightVector();
+
+		CurrentCameraForward.Z = 0.0f;
+		CurrentCameraRight.Z = 0.0f;
+
+		CurrentCameraForward.Normalize();
+		CurrentCameraRight.Normalize();
+	}
 
 	//入力をカメラの向き基準のワールド方向に変換
-	CurrentDirection = (Forward * MoveInput.Y + Right * MoveInput.X).GetSafeNormal();
+	CurrentDirection = (CurrentCameraForward * MoveInput.Y + CurrentCameraRight * MoveInput.X).GetSafeNormal();
 
 	const FVector Delta = CurrentDirection * PlayerData->MoveSpeed * DeltaTime;
 
 	if (!Delta.IsNearlyZero())
 	{
 		AddActorWorldOffset(Delta, true);
+		isMoving = true;
+	}
+	else
+	{
+		isMoving = false;
 	}
 }
 
@@ -120,8 +136,18 @@ void APlayerPawn::UnPossessed()
 //InputManagerを初期化する関数
 void APlayerPawn::InitializeInputManager()
 {
-	if (AInputReceiver* InputReceiver = Cast<AInputReceiver>(GetController()))
+	AInputReceiver* InputReceiver =	Cast<AInputReceiver>(GetController());
+
+	if (InputReceiver == nullptr)
 	{
-		InputManager = InputReceiver->GetInputManager();
+		UE_LOG(LogTemp,Warning,TEXT("InputReceiver is null in PlayerPawn::InitializeInputManager."));
+		return;
+	}
+
+	InputManager = InputReceiver->GetInputManager();
+
+	if (InputManager == nullptr)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("InputManager is null in PlayerPawn::InitializeInputManager."));
 	}
 }

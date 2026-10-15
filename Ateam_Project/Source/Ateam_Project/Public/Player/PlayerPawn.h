@@ -25,26 +25,38 @@ protected:
 
 	//コントローラーがPossessしたときに呼ばれる
 	virtual void PossessedBy(AController* NewController) override;
-
 	//コントローラーがUnPossessしたときに呼ばれる
 	virtual void UnPossessed() override;
-
+	//InputManagerを初期化する関数
 	void InitializeInputManager();
 
 private:
+	//移動処理を行う関数
 	void Move(float DeltaTime);
+	//回転処理を行う関数
 	void Rotate(float DeltaTime);
 
 protected:
+
+	//プレイヤーのデータを格納するデータアセット
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Player")
 	TObjectPtr<UPlayerData> PlayerData = nullptr;
-
+	//カメラを制御するアクター
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<AActor> Camera = nullptr;
 
 private:
+
+	//入力管理を行うオブジェクト
 	UPROPERTY(Transient)
 	TObjectPtr<UInputManager> InputManager = nullptr;
 
+	//カメラの現在の方向を保持する変数
 	FVector CurrentDirection = FVector::ZeroVector;
+	//カメラの現在の前方向を保持する変数
+	FVector CurrentCameraForward = FVector::ZeroVector;
+	//カメラの現在の右方向を保持する変数
+	FVector CurrentCameraRight = FVector::ZeroVector;
+	//プレイヤーが移動中かどうかを保持する変数
+	bool isMoving = false;
 };
