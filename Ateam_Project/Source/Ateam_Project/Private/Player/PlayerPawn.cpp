@@ -37,7 +37,7 @@ void APlayerPawn::BeginPlay()
 		UE_LOG(
 			LogTemp,
 			Error,
-			TEXT("Camera is invalid. Check the Camera property in PlayerPawn.")
+			TEXT("Camera is not set in PlayerPawn.")
 		);
 	}
 
@@ -188,13 +188,6 @@ void APlayerPawn::InitializeInputManager()
 {
 	AController* CurrentController = GetController();
 
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("[PlayerPawn] Controller=%s"),
-		*GetNameSafe(CurrentController)
-	);
-
 	AInputReceiver* InputReceiver = Cast<AInputReceiver>(CurrentController);
 
 	if (!IsValid(InputReceiver))
@@ -208,12 +201,4 @@ void APlayerPawn::InitializeInputManager()
 	}
 
 	InputManager = InputReceiver->GetInputManager();
-
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("[PlayerPawn] InputManager=%p, IsValid=%d"),
-		InputManager.Get(),
-		IsValid(InputManager)
-	);
 }

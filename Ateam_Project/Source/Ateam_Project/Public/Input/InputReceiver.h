@@ -46,7 +46,6 @@ private:
 	TObjectPtr<UInputAction> LookAction = nullptr;
 
 	//入力管理を行うオブジェクト
-	UPROPERTY(VisibleAnywhere, Instanced, Category = "Input")
 	TObjectPtr<UInputManager> InputManager = nullptr;
 
 	void Move(const FInputActionValue& Value);

@@ -8,37 +8,11 @@ AInputReceiver::AInputReceiver()
 {
 	//コントローラーが存在する時点でInputManagerも必ず存在するようにする
 	InputManager = CreateDefaultSubobject<UInputManager>(TEXT("InputManager"));
-
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("[Constructor] this=%p, InputManager=%p, IsValid=%d"),
-		this,
-		InputManager.Get(),
-		IsValid(InputManager)
-	);
-
-	HasAnyFlags(RF_ClassDefaultObject);
-
-	UE_LOG(LogTemp, Warning,
-		TEXT("[Constructor] this=%p, IsCDO=%d, InputManager=%p"),
-		this,
-		HasAnyFlags(RF_ClassDefaultObject),
-		InputManager.Get());
 }
 
 void AInputReceiver::BeginPlay()
 {
 	Super::BeginPlay();
-
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("[BeginPlay] this=%p, InputManager=%p, IsValid=%d"),
-		this,
-		InputManager.Get(),
-		IsValid(InputManager)
-	);
 
 	//Enhanced Input Systemの設定
 	ULocalPlayer* LocalPlayer = GetLocalPlayer();
@@ -206,17 +180,11 @@ void AInputReceiver::Look(const FInputActionValue& Value)
 
 UInputManager* AInputReceiver::GetInputManager()
 {
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("[GetInputManager] this=%p, InputManager=%p"),
-		this,
-		InputManager.Get()
-	);
-
+	//InputManagerが無効な場合は新しいインスタンスを作成する
 	if (!IsValid(InputManager))
 	{
 		InputManager = NewObject<UInputManager>(this);
+		UE_LOG(LogTemp, Warning, TEXT("InputManager was invalid. A new instance has been created."));
 	}
 
 	return InputManager;
