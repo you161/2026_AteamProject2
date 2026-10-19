@@ -35,7 +35,10 @@ private:
 	void Move(float DeltaTime);
 	//回転処理を行う関数
 	void Rotate(float DeltaTime);
+	//ジャンプ処理を行う関数
+	void Jump(float DeltaTime);
 
+	bool IsGrounded() const;
 protected:
 
 	//プレイヤーのデータを格納するデータアセット
@@ -59,4 +62,8 @@ private:
 	FVector CurrentCameraRight = FVector::ZeroVector;
 	//プレイヤーが移動中かどうかを保持する変数
 	bool isMoving = false;
+	//プレイヤーの垂直方向の速度を保持する変数
+	float VerticalVelocity = 0.0f;
+	//プレイヤーが接地しているかどうかを保持する変数
+	bool bIsGrounded = false;
 };

@@ -8,16 +8,42 @@ AInputReceiver::AInputReceiver()
 {
 	//コントローラーが存在する時点でInputManagerも必ず存在するようにする
 	InputManager = CreateDefaultSubobject<UInputManager>(TEXT("InputManager"));
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("[Constructor] this=%p, InputManager=%p, IsValid=%d"),
+		this,
+		InputManager.Get(),
+		IsValid(InputManager)
+	);
+
+	HasAnyFlags(RF_ClassDefaultObject);
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("[Constructor] this=%p, IsCDO=%d, InputManager=%p"),
+		this,
+		HasAnyFlags(RF_ClassDefaultObject),
+		InputManager.Get());
 }
 
 void AInputReceiver::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("[BeginPlay] this=%p, InputManager=%p, IsValid=%d"),
+		this,
+		InputManager.Get(),
+		IsValid(InputManager)
+	);
+
 	//Enhanced Input Systemの設定
 	ULocalPlayer* LocalPlayer = GetLocalPlayer();
 
-	if (LocalPlayer == nullptr)
+	if (!IsValid(LocalPlayer))
 	{
 		return;
 	}
@@ -25,7 +51,7 @@ void AInputReceiver::BeginPlay()
 	UEnhancedInputLocalPlayerSubsystem* InputSubsystem =
 		LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 
-	if (InputSubsystem == nullptr)
+	if (!IsValid(InputSubsystem))
 	{
 		return;
 	}
@@ -46,13 +72,13 @@ void AInputReceiver::SetupInputComponent()
 	//Enhanced Input Systemの設定
 	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
 
-	if (EnhancedInputComponent == nullptr)
+	if (!IsValid(EnhancedInputComponent))
 	{
 		UE_LOG(LogTemp, Error, TEXT("InputComponent is not EnhancedInputComponent."));
 		return;
 	}
 
-	if (MoveAction != nullptr)
+	if (IsValid(MoveAction))
 	{
 		EnhancedInputComponent->BindAction(
 			MoveAction,
@@ -80,7 +106,7 @@ void AInputReceiver::SetupInputComponent()
 		UE_LOG(LogTemp, Error, TEXT("MoveAction is not set in InputReceiver."));
 	}
 
-	if (JumpAction != nullptr)
+	if (IsValid(JumpAction))
 	{
 		EnhancedInputComponent->BindAction(
 			JumpAction,
@@ -101,7 +127,7 @@ void AInputReceiver::SetupInputComponent()
 		UE_LOG(LogTemp, Error, TEXT("JumpAction is not set in InputReceiver."));
 	}
 
-	if (LookAction != nullptr)
+	if (IsValid(LookAction))
 	{
 		EnhancedInputComponent->BindAction(
 			LookAction,
@@ -133,8 +159,9 @@ void AInputReceiver::SetupInputComponent()
 //入力をInputManagerに渡す関数群
 void AInputReceiver::Move(const FInputActionValue& Value)
 {
-	if (InputManager == nullptr)
+	if (!IsValid(InputManager))
 	{
+		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in Move function."));
 		return;
 	}
 
@@ -144,8 +171,9 @@ void AInputReceiver::Move(const FInputActionValue& Value)
 //ジャンプ入力をInputManagerに渡す関数群
 void AInputReceiver::Jump()
 {
-	if (InputManager == nullptr)
+	if (!IsValid(InputManager))
 	{
+		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in Jump function."));
 		return;
 	}
 
@@ -155,8 +183,9 @@ void AInputReceiver::Jump()
 //ジャンプ入力をInputManagerに渡す関数群
 void AInputReceiver::JumpReleased()
 {
-	if (InputManager == nullptr)
+	if (!IsValid(InputManager))
 	{
+		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in JumpReleased function."));
 		return;
 	}
 
@@ -166,10 +195,29 @@ void AInputReceiver::JumpReleased()
 //マウス入力をInputManagerに渡す関数群
 void AInputReceiver::Look(const FInputActionValue& Value)
 {
-	if (InputManager == nullptr)
+	if (!IsValid(InputManager))
 	{
+		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in Look function."));
 		return;
 	}
 
 	InputManager->SetMouseInput(Value.Get<FVector2D>());
+}
+
+UInputManager* AInputReceiver::GetInputManager()
+{
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("[GetInputManager] this=%p, InputManager=%p"),
+		this,
+		InputManager.Get()
+	);
+
+	if (!IsValid(InputManager))
+	{
+		InputManager = NewObject<UInputManager>(this);
+	}
+
+	return InputManager;
 }

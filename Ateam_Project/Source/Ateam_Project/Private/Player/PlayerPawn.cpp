@@ -12,12 +12,12 @@ void APlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (PlayerData == nullptr)
+	if (!IsValid(PlayerData))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerData is not set in PlayerPawn."));
 	}
 
-	if (Camera == nullptr)
+	if (!IsValid(Camera))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Camera is not set in PlayerPawn."));
 	}
@@ -26,8 +26,21 @@ void APlayerPawn::BeginPlay()
 	InitializeInputManager();
 
 	CurrentDirection = FVector::ZeroVector;
-	CurrentCameraForward = Camera->GetActorForwardVector();
-	CurrentCameraRight = Camera->GetActorRightVector();
+
+	if (IsValid(Camera))
+	{
+		CurrentCameraForward = Camera->GetActorForwardVector();
+		CurrentCameraRight = Camera->GetActorRightVector();
+	}
+	else
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT("Camera is invalid. Check the Camera property in PlayerPawn.")
+		);
+	}
+
 	isMoving = false;
 }
 
@@ -36,7 +49,7 @@ void APlayerPawn::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	//Possess前や必要な設定がない間は何もしない
-	if (InputManager == nullptr || PlayerData == nullptr || Camera == nullptr)
+	if (!IsValid(InputManager) || !IsValid(PlayerData) || !IsValid(Camera))
 	{
 		return;
 	}
@@ -115,6 +128,43 @@ void APlayerPawn::Rotate(float DeltaTime)
 	SetActorRotation(NewRotation);
 }
 
+void APlayerPawn::Jump(float DeltaTime)
+{
+	bIsGrounded = IsGrounded();
+
+	if (bIsGrounded)
+	{
+		if (VerticalVelocity < 0.0f)
+		{
+			VerticalVelocity = 0.0f;
+		}
+
+		if (InputManager->IsJumpPressed())
+		{
+			VerticalVelocity = PlayerData->JumpSpeed;
+		}
+	}
+	else
+	{
+		VerticalVelocity -= PlayerData->Gravity * DeltaTime;
+	}
+
+	FHitResult Hit;
+	AddActorWorldOffset(FVector(0, 0, VerticalVelocity * DeltaTime), true, &Hit);
+
+	// 天井や床にぶつかったら速度をリセット
+	if (Hit.IsValidBlockingHit())
+	{
+		VerticalVelocity = 0.0f;
+	}
+}
+
+bool APlayerPawn::IsGrounded() const
+{
+	// TODO: 地面判定処理を実装する
+	return false;
+}
+
 //PossessedByは、コントローラーがポーンを制御する際に呼び出される関数
 void APlayerPawn::PossessedBy(AController* NewController)
 {
@@ -136,18 +186,34 @@ void APlayerPawn::UnPossessed()
 //InputManagerを初期化する関数
 void APlayerPawn::InitializeInputManager()
 {
-	AInputReceiver* InputReceiver =	Cast<AInputReceiver>(GetController());
+	AController* CurrentController = GetController();
 
-	if (InputReceiver == nullptr)
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("[PlayerPawn] Controller=%s"),
+		*GetNameSafe(CurrentController)
+	);
+
+	AInputReceiver* InputReceiver = Cast<AInputReceiver>(CurrentController);
+
+	if (!IsValid(InputReceiver))
 	{
-		UE_LOG(LogTemp,Warning,TEXT("InputReceiver is null in PlayerPawn::InitializeInputManager."));
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("[PlayerPawn] InputReceiver is invalid.")
+		);
 		return;
 	}
 
 	InputManager = InputReceiver->GetInputManager();
 
-	if (InputManager == nullptr)
-	{
-		UE_LOG(LogTemp,Warning,TEXT("InputManager is null in PlayerPawn::InitializeInputManager."));
-	}
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("[PlayerPawn] InputManager=%p, IsValid=%d"),
+		InputManager.Get(),
+		IsValid(InputManager)
+	);
 }
