@@ -21,17 +21,21 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
+	// 敵のアセットデータ
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "EnemyData")
 	TObjectPtr<UEnemyData> EnemyData = nullptr;
+
+	// プレイヤーのアクター
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerPawn")
 	TObjectPtr<AActor> PlayerPawn = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AttackActor")
-	TSubclassOf<AActor> BP_AttackActor = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AttackActor")
-	FVector AttackActorLocation = FVector(0.0f, 0.0f, 0.0f);
 
+	// 攻撃のオブジェクト
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack")
+	TSubclassOf<AActor> BP_AttackActor = nullptr;
+
+	// 攻撃の当たり判定
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* AttackCollsition;
+	TArray<UBoxComponent*> AttackCollsition;
 
 	UFUNCTION()
 	void OnOverlapBegin(
@@ -43,8 +47,12 @@ protected:
 		const FHitResult& SweepResult);
 
 private:
-	TObjectPtr<AActor> AttackActor = nullptr;
+	TArray<AActor*> AttackActor;
 	FVector TargetDirection = FVector(0.0f, 0.0f, 0.0f);
 
+	float countTime = 0.0f;
+
+	void MoveCurve(float DeltaTime);
+	float theta = 0.1f;
 	bool bIsAttack = false;
 };
