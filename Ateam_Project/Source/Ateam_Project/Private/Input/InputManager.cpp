@@ -31,10 +31,13 @@ FVector2D UInputManager::GetMouseInput() const
 void UInputManager::SetIsInteracting(bool bInteracting)
 {
 	isInteracting = bInteracting;
+	UE_LOG(LogTemp, Warning, TEXT("SetIsInteracting: %s"),isInteracting ? TEXT("true") : TEXT("false"));
 }
 
 //インタラクション中かどうかを取得する関数
-bool UInputManager::GetIsInteracting() const
+bool UInputManager::ConsumeInteract()
 {
-	return isInteracting;
+	const bool bResult = isInteracting;
+	isInteracting = false;
+	return bResult;
 }
