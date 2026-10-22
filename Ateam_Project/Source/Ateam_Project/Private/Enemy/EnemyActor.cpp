@@ -23,48 +23,39 @@ void AEnemyActor::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerPawn is not set in EnemyActor."));
 	}
-	if (BP_AttackActor == nullptr)
+	if (EnemyData->BP_FallActor == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("BP_AttackActor is not set in EnemyActor."));
 	}
-	
+
+	BoxCollision = FindComponentByClass<UBoxComponent>();
+	if (BoxCollision != nullptr)
+	{
+		BoxCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
+	}
+	countTime = 0.0f;
 	bIsAttack = false;
 }
 
 void AEnemyActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	if (!bIsAttack)
-	{
-		countTime += DeltaTime;
 
-		if (countTime > EnemyData->CooldownTime)
-		{
-			AttackActor.Empty();
-			for (int i = 0; i < EnemyData->ActorCount; ++i)
-			{
-				AttackActor.Emplace();
-				AttackActor[i] = GetWorld()->SpawnActor<AActor>(BP_AttackActor, FTransform(
-					FVector(FMath::RandRange(-1000.f, 1000.f), FMath::RandRange(-1000.f, 1000.f), 1000.f)));
-				AttackCollsition.Emplace();
-				AttackCollsition[i] = AttackActor[i]->FindComponentByClass<UBoxComponent>();
-				AttackCollsition[i]->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
-			}
-			countTime = 0.0f;
-			bIsAttack = true;
-		}
-	}
-	else if (bIsAttack)
+	countTime += DeltaTime;
+
+	if (countTime > EnemyData->CooldownTime)
 	{
-		countTime += DeltaTime;
-		if (AttackActor.Num() == 0) return;
-		for (int i = AttackActor.Num() - 1; i >= 0; --i)
+		for (int i = 0; i < EnemyData->ActorCount; ++i)
 		{
-			FVector currentLocation = AttackActor[i]->GetActorLocation();
-			currentLocation.Z += EnemyData->MoveSpeed * 0.5 * 9.8 * DeltaTime * DeltaTime;
-			AttackActor[i]->SetActorLocation(currentLocation);
+			double index = i % EnemyData->SetArea.Num();
+			double minX = EnemyData->SetArea[index].X;
+			double minY = EnemyData->SetArea[index].Y;
+			double maxX = EnemyData->SetArea[index].Z;
+			double maxY = EnemyData->SetArea[index].W;
+			GetWorld()->SpawnActor<AActor>(EnemyData->BP_FallActor,
+				FTransform(FVector(FMath::RandRange(minX, maxX), FMath::RandRange(minY, maxY), EnemyData->SetHeight)));
 		}
+		countTime = 0.0f;
 	}
 }
 
@@ -78,47 +69,7 @@ void AEnemyActor::OnOverlapBegin(
 {
 	if (OtherActor && OtherActor != this)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Overlap!"));
-
-		AActor* HitAttackActor = OverlappedComp->GetOwner();
-		if (HitAttackActor)
-		{
-			int32 Index = AttackActor.Find(HitAttackActor);
-			if (Index != INDEX_NONE && IsValid(AttackActor[Index]))
-			{
-				AttackActor[Index]->Destroy();
-
-				AttackActor.RemoveAt(Index);
-				AttackCollsition.RemoveAt(Index);
-
-				if (AttackActor.Num() == 0)
-				{
-					countTime = 0.0f;
-					bIsAttack = false;
-				}
-			}
-		}
-	}
-}
-
-
-// 記念品
-void AEnemyActor::MoveCurve(float DeltaTime)
-{
-	if (FMath::Cos(theta) < 1 && bIsAttack)
-	{
-		theta += 0.01f;
-		TargetDirection = PlayerPawn->GetActorLocation() - AttackActor[0]->GetActorLocation();
-		TargetDirection.Normalize();
-		bIsAttack = false;
-	}
-	else if (bIsAttack)
-	{
+		UE_LOG(LogTemp, Warning, TEXT("Overlap was called by EnemyActor."));
 
 	}
-
-	FVector currentLocation = AttackActor[0]->GetActorLocation();
-	currentLocation += TargetDirection * EnemyData->MoveSpeed * DeltaTime;
-	currentLocation.Y = currentLocation.Y + FMath::Cos(theta) * 25.f;
-	AttackActor[0]->SetActorLocation(currentLocation);
 }

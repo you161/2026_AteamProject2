@@ -29,14 +29,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerPawn")
 	TObjectPtr<AActor> PlayerPawn = nullptr;
 
-	// 攻撃のオブジェクト
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack")
-	TSubclassOf<AActor> BP_AttackActor = nullptr;
-
-	// 攻撃の当たり判定
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TArray<UBoxComponent*> AttackCollsition;
-
 	UFUNCTION()
 	void OnOverlapBegin(
 		UPrimitiveComponent* OverlappedComp,
@@ -47,12 +39,8 @@ protected:
 		const FHitResult& SweepResult);
 
 private:
-	TArray<AActor*> AttackActor;
-	FVector TargetDirection = FVector(0.0f, 0.0f, 0.0f);
-
+	TObjectPtr<UBoxComponent> BoxCollision;
 	float countTime = 0.0f;
-
-	void MoveCurve(float DeltaTime);
-	float theta = 0.1f;
 	bool bIsAttack = false;
+
 };
