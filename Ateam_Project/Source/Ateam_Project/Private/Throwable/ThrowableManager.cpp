@@ -1,6 +1,8 @@
 
 #include "Throwable/ThrowableManager.h"
 #include "Throwable/ThrowableObject.h"
+#include "Input/InputManager.h"
+#include "Input/InputReceiver.h"
 
 AThrowableManager::AThrowableManager()
 {
@@ -10,6 +12,7 @@ AThrowableManager::AThrowableManager()
 void AThrowableManager::BeginPlay() 
 {
 	Super::BeginPlay();
+
 	InitializeInputManager();
 }
 
@@ -17,22 +20,26 @@ void AThrowableManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!IsValid(InputManager) || !InputManager->ConsumeInteractPressed())
+	if (!IsValid(InputManager))
 	{
 		return;
 	}
 
-	if (IsValid(HeldItem))
-	{
-		Throw();
-	}
-	else
-	{
-		AThrowableObject* Target = FindNearestItem();
-		if (IsValid(Target))
+	if (InputManager->GetIsInteracting()) {
+
+		if (IsValid(HeldItem))
 		{
-			PickUp(Target);
+			Throw();
 		}
+		else
+		{
+			AThrowableObject* Target = FindNearestItem();
+			if (IsValid(Target))
+			{
+				PickUp(Target);
+			}
+		}
+
 	}
 }
 
@@ -90,4 +97,12 @@ void AThrowableManager::Throw()
 {
 	HeldItem->OnThrown(Player->GetActorForwardVector());
 	HeldItem = nullptr;
+}
+
+void AThrowableManager::InitializeInputManager()
+{
+	if (AInputReceiver* InputReceiver = Cast<AInputReceiver>(GetWorld()->GetFirstPlayerController()))
+	{
+		InputManager = InputReceiver->GetInputManager();
+	}
 }

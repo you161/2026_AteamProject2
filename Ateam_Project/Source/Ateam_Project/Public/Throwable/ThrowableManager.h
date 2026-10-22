@@ -6,6 +6,7 @@
 #include "ThrowableManager.generated.h"
 
 class AThrowableObject;
+class UInputManager;
 
 /**
  * 近くのアイテムを拾うためのマネージャークラス
