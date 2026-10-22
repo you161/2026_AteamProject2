@@ -66,18 +66,27 @@ void APlayerPawn::Move(float DeltaTime)
 {
 	const FVector2D MoveInput = InputManager->GetMoveInput();
 
-	if (!isMoving)
-	{
-		//移動中じゃないときはカメラの向きを更新する
-		CurrentCameraForward = Camera->GetActorForwardVector();
-		CurrentCameraRight = Camera->GetActorRightVector();
+	//if (!isMoving)
+	//{
+	//	//移動中じゃないときはカメラの向きを更新する
+	//	CurrentCameraForward = Camera->GetActorForwardVector();
+	//	CurrentCameraRight = Camera->GetActorRightVector();
 
-		CurrentCameraForward.Z = 0.0f;
-		CurrentCameraRight.Z = 0.0f;
+	//	CurrentCameraForward.Z = 0.0f;
+	//	CurrentCameraRight.Z = 0.0f;
 
-		CurrentCameraForward.Normalize();
-		CurrentCameraRight.Normalize();
-	}
+	//	CurrentCameraForward.Normalize();
+	//	CurrentCameraRight.Normalize();
+	//}
+
+	CurrentCameraForward = Camera->GetActorForwardVector();
+	CurrentCameraRight = Camera->GetActorRightVector();
+
+	CurrentCameraForward.Z = 0.0f;
+	CurrentCameraRight.Z = 0.0f;
+
+	CurrentCameraForward.Normalize();
+	CurrentCameraRight.Normalize();
 
 	//入力をカメラの向き基準のワールド方向に変換
 	CurrentDirection = (CurrentCameraForward * MoveInput.Y + CurrentCameraRight * MoveInput.X).GetSafeNormal();
