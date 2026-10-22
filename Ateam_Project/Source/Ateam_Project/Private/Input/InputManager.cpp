@@ -34,7 +34,7 @@ void UInputManager::SetIsInteracting(bool bInteracting)
 }
 
 //インタラクション中かどうかを取得する関数
-bool UInputManager::IsInteracting() const
+bool UInputManager::GetIsInteracting() const
 {
 	return isInteracting;
 }

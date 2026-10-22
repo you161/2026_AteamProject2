@@ -46,6 +46,16 @@ void AThrowableObject::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void AThrowableObject::OnPickedUp(AActor* Holder)
+{
+
+}
+
+void AThrowableObject::OnThrown(const FVector& Direction)
+{
+
+}
+
 // 他のアクタと重なった時に呼ばれる
 void AThrowableObject::OnOverlap(
     UPrimitiveComponent* OverlappedComp,

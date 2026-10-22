@@ -161,6 +161,7 @@ void AInputReceiver::Interact()
 		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in Interact function."));
 		return;
 	}
+
 	InputManager->SetIsInteracting(true);
 }
 
@@ -171,6 +172,7 @@ void AInputReceiver::InteractReleased()
 		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in InteractReleased function."));
 		return;
 	}
+
 	InputManager->SetIsInteracting(false);
 }
 
