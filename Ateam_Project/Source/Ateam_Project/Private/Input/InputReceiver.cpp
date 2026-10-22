@@ -80,27 +80,6 @@ void AInputReceiver::SetupInputComponent()
 		UE_LOG(LogTemp, Error, TEXT("MoveAction is not set in InputReceiver."));
 	}
 
-	if (IsValid(InteractAction))
-	{
-		EnhancedInputComponent->BindAction(
-			InteractAction,
-			ETriggerEvent::Started,
-			this,
-			&AInputReceiver::Interact
-		);
-
-		EnhancedInputComponent->BindAction(
-			InteractAction,
-			ETriggerEvent::Completed,
-			this,
-			&AInputReceiver::InteractReleased
-		);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("JumpAction is not set in InputReceiver."));
-	}
-
 	if (IsValid(LookAction))
 	{
 		EnhancedInputComponent->BindAction(
@@ -127,6 +106,20 @@ void AInputReceiver::SetupInputComponent()
 	else 
 	{
 		UE_LOG(LogTemp, Error, TEXT("LookAction is not set in InputReceiver."));
+	}
+
+	if (IsValid(InteractAction))
+	{
+		EnhancedInputComponent->BindAction(
+			InteractAction,
+			ETriggerEvent::Started,
+			this,
+			&AInputReceiver::Interact
+		);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("InteractAction is not set in InputReceiver."));
 	}
 }
 
@@ -163,17 +156,6 @@ void AInputReceiver::Interact()
 	}
 
 	InputManager->SetIsInteracting(true);
-}
-
-void AInputReceiver::InteractReleased()
-{
-	if (!IsValid(InputManager))
-	{
-		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in InteractReleased function."));
-		return;
-	}
-
-	InputManager->SetIsInteracting(false);
 }
 
 UInputManager* AInputReceiver::GetInputManager()

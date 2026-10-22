@@ -27,6 +27,13 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void SetupInputComponent() override;
+private:
+	//移動入力を設定する関数
+	void Move(const FInputActionValue& Value);
+	//マウス操作の値を設定する関数
+	void Look(const FInputActionValue& Value);
+	//インタラクトアクションを設定する関数
+	void Interact();
 
 private:
 	//入力マッピングコンテキスト
@@ -47,9 +54,4 @@ private:
 
 	//入力管理を行うオブジェクト
 	TObjectPtr<UInputManager> InputManager = nullptr;
-
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
-	void Interact();
-	void InteractReleased();
 };
