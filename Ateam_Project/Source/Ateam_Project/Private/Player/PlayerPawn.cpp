@@ -2,10 +2,17 @@
 #include "Input/InputReceiver.h"
 #include "Input/InputManager.h"
 #include "Player/PlayerData.h"
+#include "Components/CapsuleComponent.h"
 
 APlayerPawn::APlayerPawn()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	//CapsuleCollisionを生成してルートにする
+	CapsuleCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollision"));
+	SetRootComponent(CapsuleCollision);
+	CapsuleCollision->InitCapsuleSize(34.0f, 88.0f);
+	CapsuleCollision->SetCollisionProfileName(TEXT("Pawn"));
 }
 
 void APlayerPawn::BeginPlay()
@@ -34,11 +41,7 @@ void APlayerPawn::BeginPlay()
 	}
 	else
 	{
-		UE_LOG(
-			LogTemp,
-			Error,
-			TEXT("Camera is not set in PlayerPawn.")
-		);
+		UE_LOG(LogTemp,Error,TEXT("Camera is not set in PlayerPawn."));
 	}
 
 	isMoving = false;
@@ -126,43 +129,6 @@ void APlayerPawn::Rotate(float DeltaTime)
 	);
 
 	SetActorRotation(NewRotation);
-}
-
-void APlayerPawn::Jump(float DeltaTime)
-{
-	bIsGrounded = IsGrounded();
-
-	if (bIsGrounded)
-	{
-		if (VerticalVelocity < 0.0f)
-		{
-			VerticalVelocity = 0.0f;
-		}
-
-		if (InputManager->IsJumpPressed())
-		{
-			VerticalVelocity = PlayerData->JumpSpeed;
-		}
-	}
-	else
-	{
-		VerticalVelocity -= PlayerData->Gravity * DeltaTime;
-	}
-
-	FHitResult Hit;
-	AddActorWorldOffset(FVector(0, 0, VerticalVelocity * DeltaTime), true, &Hit);
-
-	// 天井や床にぶつかったら速度をリセット
-	if (Hit.IsValidBlockingHit())
-	{
-		VerticalVelocity = 0.0f;
-	}
-}
-
-bool APlayerPawn::IsGrounded() const
-{
-	// TODO: 地面判定処理を実装する
-	return false;
 }
 
 //PossessedByは、コントローラーがポーンを制御する際に呼び出される関数
