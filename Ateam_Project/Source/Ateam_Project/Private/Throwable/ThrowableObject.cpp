@@ -44,19 +44,56 @@ void AThrowableObject::BeginPlay()
 void AThrowableObject::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+    UpdateThrownMovement(DeltaTime);
 }
 
+//持たれているときの処理
 void AThrowableObject::OnPickedUp(AActor* Holder)
 {
+    if (!IsValid(Holder))
+    {
+        return;
+    }
 
+    CurrentState = EThrowableState::Held;
+
+    //持たれている間は当たり判定を切る(プレイヤーを押したり、再度Overlapしたりしないように)
+    SetActorEnableCollision(false);
+
+    //プレイヤーにアタッチ
+    AttachToActor(Holder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+    //プレイヤーから見た相対位置(前方100、高さ50)
+    SetActorRelativeLocation(FVector(100.0f, 0.0f, 50.0f));
+    SetActorRelativeRotation(FRotator::ZeroRotator);
 }
 
+//投げられた時の処理
 void AThrowableObject::OnThrown(const FVector& Direction)
 {
+    //アタッチを外す(今のワールド位置を維持)
+    DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
+    CurrentState = EThrowableState::Thrown;
+    SetActorEnableCollision(true);
+
+    CurrentDirection = Direction;
 }
 
-// 他のアクタと重なった時に呼ばれる
+//投げられて指定方向に飛んでいく処理
+void AThrowableObject::UpdateThrownMovement(float DeltaTime)
+{
+    if (CurrentState != EThrowableState::Thrown)
+    {
+        return;
+    }
+
+    const FVector Delta = CurrentDirection * 500.0f * DeltaTime;
+    AddActorWorldOffset(Delta, true);
+}
+
+//他のアクタと重なった時に呼ばれる
 void AThrowableObject::OnOverlap(
     UPrimitiveComponent* OverlappedComp,
     AActor* OtherActor,
@@ -86,7 +123,7 @@ void AThrowableObject::OnEndOverlap(
 	int32 OtherBodyIndex
 )
 {
-	// 触れたActorがプレイヤーかチェック
+	//触れたActorがプレイヤーかチェック
 	if (Cast<APlayerPawn>(OtherActor))
 	{
         if (IsValid(ThrowableManager))

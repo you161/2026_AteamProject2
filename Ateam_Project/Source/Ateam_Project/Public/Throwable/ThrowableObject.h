@@ -25,18 +25,6 @@ protected:
 
 	virtual void BeginPlay() override;
 
-public:	
-
-	virtual void Tick(float DeltaTime) override;
-
-	void OnPickedUp(AActor* Holder);
-	void OnThrown(const FVector& Direction);
-
-protected:
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
-	TObjectPtr<USphereComponent> SphereCollision;
-
 	//他のActorと重なった時に呼ばれる関数
 	UFUNCTION()
 	void OnOverlap(
@@ -57,10 +45,32 @@ protected:
 		int32 OtherBodyIndex
 	);
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager")
-	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
+public:	
+
+	virtual void Tick(float DeltaTime) override;
+	//持たれた時の関数
+	void OnPickedUp(AActor* Holder);
+	//投げられた時の関数
+	void OnThrown(const FVector& Direction);
 
 private:
+	//指定方向に飛んでいく処理
+	void UpdateThrownMovement(float DeltaTime);
 
+protected:
+	//当たり判定用
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
+	TObjectPtr<USphereComponent> SphereCollision;
+	//投げれるオブジェクトを管理するマネージャー
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager")
+	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
+	//オブジェクトが飛んでいく最終目標
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Player")
+	TObjectPtr<AActor> Enemy = nullptr;
+
+private:
+	//現在の状態を管理するステート
 	EThrowableState CurrentState = EThrowableState::Pickable;
+	//飛んでいく方向を保存する変数
+	FVector CurrentDirection = FVector::ZeroVector;
 };
