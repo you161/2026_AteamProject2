@@ -80,20 +80,20 @@ void AInputReceiver::SetupInputComponent()
 		UE_LOG(LogTemp, Error, TEXT("MoveAction is not set in InputReceiver."));
 	}
 
-	if (IsValid(JumpAction))
+	if (IsValid(InteractAction))
 	{
 		EnhancedInputComponent->BindAction(
-			JumpAction,
+			InteractAction,
 			ETriggerEvent::Started,
 			this,
-			&AInputReceiver::Jump
+			&AInputReceiver::Interact
 		);
 
 		EnhancedInputComponent->BindAction(
-			JumpAction,
+			InteractAction,
 			ETriggerEvent::Completed,
 			this,
-			&AInputReceiver::JumpReleased
+			&AInputReceiver::InteractReleased
 		);
 	}
 	else
@@ -142,30 +142,6 @@ void AInputReceiver::Move(const FInputActionValue& Value)
 	InputManager->SetMoveInput(Value.Get<FVector2D>());
 }
 
-//ジャンプ入力をInputManagerに渡す関数群
-void AInputReceiver::Jump()
-{
-	if (!IsValid(InputManager))
-	{
-		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in Jump function."));
-		return;
-	}
-
-	InputManager->SetJumpPressed(true);
-}
-
-//ジャンプ入力をInputManagerに渡す関数群
-void AInputReceiver::JumpReleased()
-{
-	if (!IsValid(InputManager))
-	{
-		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in JumpReleased function."));
-		return;
-	}
-
-	InputManager->SetJumpPressed(false);
-}
-
 //マウス入力をInputManagerに渡す関数群
 void AInputReceiver::Look(const FInputActionValue& Value)
 {
@@ -176,6 +152,26 @@ void AInputReceiver::Look(const FInputActionValue& Value)
 	}
 
 	InputManager->SetMouseInput(Value.Get<FVector2D>());
+}
+
+void AInputReceiver::Interact()
+{
+	if (!IsValid(InputManager))
+	{
+		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in Interact function."));
+		return;
+	}
+	InputManager->SetIsInteracting(true);
+}
+
+void AInputReceiver::InteractReleased()
+{
+	if (!IsValid(InputManager))
+	{
+		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in InteractReleased function."));
+		return;
+	}
+	InputManager->SetIsInteracting(false);
 }
 
 UInputManager* AInputReceiver::GetInputManager()

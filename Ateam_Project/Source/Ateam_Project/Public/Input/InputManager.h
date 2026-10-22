@@ -19,15 +19,15 @@ public:
 	void SetMoveInput(const FVector2D& Input);
 	//マウスの入力値を設定する関数
 	void SetMouseInput(const FVector2D& Input);
-	//ジャンプ入力の状態を設定する関数
-	void SetJumpPressed(bool bPressed);
+	//インタラクション中かどうかを設定する関数
+	void SetIsInteracting(bool bInteracting);
 
 	//入力値を取得する関数
 	FVector2D GetMoveInput() const;
 	//マウスの入力値を取得する関数
 	FVector2D GetMouseInput() const;
-	//ジャンプ入力の状態を取得する関数
-	bool IsJumpPressed() const;
+	//インタラクション中かどうかを取得する関数
+	bool IsInteracting() const;
 
 private:
 
@@ -35,6 +35,6 @@ private:
 	FVector2D MoveInput = FVector2D::ZeroVector;
 	//マウスの入力値を保持する変数
 	FVector2D MouseInput = FVector2D::ZeroVector;
-	//ジャンプ入力の状態を保持する変数
-	bool bJumpPressed = false;
+	//インタラクション中かどうかを保持する変数
+	bool isInteracting = false;
 };
