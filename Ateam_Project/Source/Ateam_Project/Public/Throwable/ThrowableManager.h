@@ -44,7 +44,7 @@ private:
 
 protected:
 
-	//カメラを制御するアクター
+	//プレイヤー
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Player")
 	TObjectPtr<AActor> Player = nullptr;
 

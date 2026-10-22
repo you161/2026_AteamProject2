@@ -25,7 +25,7 @@ void AThrowableManager::Tick(float DeltaTime)
 		return;
 	}
 
-	if (InputManager->GetIsInteracting()) {
+	if (InputManager->ConsumeInteract()) {
 
 		if (IsValid(HeldItem))
 		{
@@ -39,7 +39,6 @@ void AThrowableManager::Tick(float DeltaTime)
 				PickUp(Target);
 			}
 		}
-
 	}
 }
 
