@@ -27,7 +27,7 @@ public:
 	//マウスの入力値を取得する関数
 	FVector2D GetMouseInput() const;
 	//インタラクション中かどうかを取得する関数
-	bool IsInteracting() const;
+	bool GetIsInteracting() const;
 
 private:
 
