@@ -60,6 +60,8 @@ void ACameraManager::RotateCamera()
 		Pitch += LookInput.Y * PlayerData->CameraSensitivity;
 	}
 
+    //Yawの範囲を制限
+    Yaw = FMath::Clamp(Yaw, PlayerData->MinYaw, PlayerData->MaxYaw);
 	//Pitchの範囲を制限
     Pitch = FMath::Clamp(Pitch, PlayerData->MinPitch, PlayerData->MaxPitch);
 
