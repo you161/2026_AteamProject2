@@ -15,26 +15,78 @@ class ATEAM_PROJECT_API UEnemyData : public UDataAsset
 	GENERATED_BODY()
 	
 public:
+	UEnemyData();
+	bool IsConfigured() const;
+
+	//=======================================================================
+
+	// プレイヤーのアクター
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerPawn")
+	TSubclassOf<AActor> PlayerPawn = nullptr;
+
+	//=======================================================================
+
+	// ランダム生成を有効にするか
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
+	bool bHasRandom = true;
+
 	// 攻撃のオブジェクト
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	TSubclassOf<AActor> BP_FallActor = nullptr;
+	TSubclassOf<AActor> RFallActor = nullptr;
 
 	// 攻撃の数
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
 	int32 ActorCount = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	float SetHeight = 1000.0f;
-
 	// 生成エリア
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	TArray<FVector4> SetArea{ FVector4(-1000.0f, -1000.0f, 1000.0f, 1000.0f) };
+	TArray<FVector4> RSetArea{ FVector4(-1000.0f, -1000.0f, 1000.0f, 1000.0f) };
 
-	// 攻撃の時間
+	// 生成高さ
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	float CooldownTime = 0.0f;
+	float RFallHeight = 1000.0f;
 
 	// 攻撃の速度
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	float MoveSpeed = 200.0f;
+	float RFallSpeed = 200.0f;
+
+	// 攻撃の時間
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
+	float RCooldownTime = 0.0f;
+
+	//=======================================================================
+
+	// 追従攻撃の生成を有効にするか
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
+	bool bHasHoming = true;
+
+	// 攻撃のオブジェクト
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
+	TSubclassOf<AActor> HFallActor = nullptr;
+
+	// 生成高さ
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
+	float HFallHeight = 1000.0f;
+
+	// 攻撃の速度
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
+	float HFallSpeed = 200.0f;
+
+	// 攻撃の時間
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
+	float HCooldownTime = 0.0f;
+
+	//=======================================================================
+	
+	// ダメージの予告範囲
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DamageZone")
+	TSubclassOf<AActor> DamageZone = nullptr;
+
+	// ランダム攻撃の予告時間
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DamageZone")
+	float RWarningTime = 1.0f;
+
+	// 追従攻撃の予告時間
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DamageZone")
+	float HWarningTime = 1.0f;
 };
