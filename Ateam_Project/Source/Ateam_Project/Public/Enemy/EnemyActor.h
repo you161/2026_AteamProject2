@@ -7,6 +7,7 @@
 #include "EnemyActor.generated.h"
 
 class UEnemyData;
+class AFallActor;
 class UBoxComponent;
 
 UCLASS()
@@ -25,10 +26,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "EnemyData")
 	TObjectPtr<UEnemyData> EnemyData = nullptr;
 
-	// プレイヤーのアクター
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerPawn")
-	TObjectPtr<AActor> PlayerPawn = nullptr;
-
 	UFUNCTION()
 	void OnOverlapBegin(
 		UPrimitiveComponent* OverlappedComp,
@@ -39,8 +36,9 @@ protected:
 		const FHitResult& SweepResult);
 
 private:
-	TObjectPtr<UBoxComponent> BoxCollision;
-	float countTime = 0.0f;
-	bool bIsAttack = false;
+	TObjectPtr<UBoxComponent> BoxCollision = nullptr;
+	float RcountTime = 0.0f;
+	float HcountTime = 0.0f;
+	bool bIsConfigured = false;
 
 };

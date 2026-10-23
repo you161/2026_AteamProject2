@@ -2,7 +2,9 @@
 
 
 #include "Enemy/EnemyActor.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/BoxComponent.h"
+#include "Enemy/FallActor.h"
 #include "Enemy/EnemyData.h"
 
 AEnemyActor::AEnemyActor()
@@ -18,44 +20,66 @@ void AEnemyActor::BeginPlay()
 	if (EnemyData == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("EnemyData is not set in EnemyActor"));
+		bIsConfigured = false;
 	}
-	if (PlayerPawn == nullptr)
+	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerPawn is not set in EnemyActor."));
+		bIsConfigured = EnemyData->IsConfigured();
 	}
-	if (EnemyData->BP_FallActor == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("BP_AttackActor is not set in EnemyActor."));
-	}
-
+	
 	BoxCollision = FindComponentByClass<UBoxComponent>();
 	if (BoxCollision != nullptr)
 	{
 		BoxCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
 	}
-	countTime = 0.0f;
-	bIsAttack = false;
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BoxCollision is not set in EnemyActor"));
+		bIsConfigured = false;
+	}
+
+	RcountTime = 0.0f;
+	HcountTime = 0.0f;
 }
 
 void AEnemyActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	countTime += DeltaTime;
+	if (!bIsConfigured) return;
 
-	if (countTime > EnemyData->CooldownTime)
+	if (EnemyData->bHasRandom)
 	{
-		for (int i = 0; i < EnemyData->ActorCount; ++i)
+		RcountTime += DeltaTime;
+
+		if (RcountTime > EnemyData->RCooldownTime)
 		{
-			double index = i % EnemyData->SetArea.Num();
-			double minX = EnemyData->SetArea[index].X;
-			double minY = EnemyData->SetArea[index].Y;
-			double maxX = EnemyData->SetArea[index].Z;
-			double maxY = EnemyData->SetArea[index].W;
-			GetWorld()->SpawnActor<AActor>(EnemyData->BP_FallActor,
-				FTransform(FVector(FMath::RandRange(minX, maxX), FMath::RandRange(minY, maxY), EnemyData->SetHeight)));
+			for (int i = 0; i < EnemyData->ActorCount; ++i)
+			{
+				double index = i % EnemyData->RSetArea.Num();
+				double minX = EnemyData->RSetArea[index].X;
+				double minY = EnemyData->RSetArea[index].Y;
+				double maxX = EnemyData->RSetArea[index].Z;
+				double maxY = EnemyData->RSetArea[index].W;
+				GetWorld()->SpawnActor<AActor>(EnemyData->RFallActor,
+					FTransform(FVector(FMath::RandRange(minX, maxX), FMath::RandRange(minY, maxY), EnemyData->RFallHeight)));
+			}
+			RcountTime = 0.0f;
 		}
-		countTime = 0.0f;
+	}
+
+	if (EnemyData->bHasHoming)
+	{
+		HcountTime += DeltaTime;
+
+		if (HcountTime > EnemyData->HCooldownTime)
+		{
+			AActor* PlayerPawn = UGameplayStatics::GetActorOfClass(GetWorld(), EnemyData->PlayerPawn);
+			AFallActor* HomingActor = GetWorld()->SpawnActor<AFallActor>(EnemyData->HFallActor,
+				FTransform(FVector(PlayerPawn->GetActorLocation().X, PlayerPawn->GetActorLocation().Y, EnemyData->HFallHeight)));
+			HomingActor->SetHoming();
+			HcountTime = 0.0f;
+		}
 	}
 }
 
