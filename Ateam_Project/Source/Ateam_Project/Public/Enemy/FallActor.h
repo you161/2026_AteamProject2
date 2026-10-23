@@ -7,7 +7,9 @@
 #include "FallActor.generated.h"
 
 class UEnemyData;
+class UStaticMeshComponent;
 class UBoxComponent;
+class UCapsuleComponent;
 
 UCLASS()
 class ATEAM_PROJECT_API AFallActor : public AActor
@@ -16,6 +18,8 @@ class ATEAM_PROJECT_API AFallActor : public AActor
 	
 public:	
 	AFallActor();
+
+	void SetHoming();
 
 protected:
 	virtual void BeginPlay() override;
@@ -33,7 +37,24 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
+	void OnOverlapEnd(
+		UPrimitiveComponent* OverlappedComp,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex);
+
 private:
-	TObjectPtr<UBoxComponent> BoxCollision;
-	float countTime = 0.0f;;
+	TObjectPtr<AActor> PlayerPawn = nullptr;
+	TObjectPtr<AActor> ZoneActor = nullptr;
+	TObjectPtr<UStaticMeshComponent> ZoneMesh = nullptr;
+	TObjectPtr<UCapsuleComponent> ZoneCollision = nullptr;
+	TObjectPtr<UBoxComponent> BoxCollision = nullptr;
+	FVector BaseMesh = FVector(0.0f, 0.0f, 0.0f);
+	FVector BaseCollision = FVector(0.0f, 0.0f, 0.0f);
+	float countTime = 0.0f;
+	float FallTime = 0.0f;
+	bool bIsReady = false;
+	bool bIsFalling = false;
+	bool bIsHoming = false;
+	bool bIsHitPlayer = false;
 };
