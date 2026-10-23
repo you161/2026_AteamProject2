@@ -104,15 +104,13 @@ void AThrowableObject::OnOverlap(
 )
 {
     //プレイヤー以外は無視
-    if (!Cast<APlayerPawn>(OtherActor))
+    if (Cast<APlayerPawn>(OtherActor))
     {
-        return;
-    }
-
-    //拾える状態のときだけ候補に登録する
-    if (CurrentState == EThrowableState::Pickable && IsValid(ThrowableManager))
-    {
-        ThrowableManager->AddCandidate(this);
+        //拾える状態のときだけ候補に登録する
+        if (CurrentState == EThrowableState::Pickable && IsValid(ThrowableManager))
+        {
+            ThrowableManager->AddCandidate(this);
+        }
     }
 }
 
