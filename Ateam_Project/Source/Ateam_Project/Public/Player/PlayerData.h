@@ -48,4 +48,12 @@ public:
 	//カメラの最大ピッチ角度
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
     float MaxPitch = 20.0f;
+
+    //カメラの最小ヨー角度
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+    float MinYaw = -60.0f;
+
+    //カメラの最大ヨー角度
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+    float MaxYaw = 60.0f;
 };
