@@ -25,6 +25,16 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
+	void SetEnemyData();
+	void SetBoxCollision();
+	void SetPlayerPawn();
+	void SetZoneMesh();
+	void SetZoneCollision();
+	void SetBaseSize();
+	void SpawnZoneActor();
+	void UpdateSize(float WaringTime);
+	void UpdateLocation(float DeltaTime, float WarningTime, float FallSpeed);
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "EnemyData")
 	TObjectPtr<UEnemyData> EnemyData = nullptr;
 	
@@ -49,12 +59,12 @@ private:
 	TObjectPtr<UStaticMeshComponent> ZoneMesh = nullptr;
 	TObjectPtr<UCapsuleComponent> ZoneCollision = nullptr;
 	TObjectPtr<UBoxComponent> BoxCollision = nullptr;
-	FVector BaseMesh = FVector(0.0f, 0.0f, 0.0f);
-	FVector BaseCollision = FVector(0.0f, 0.0f, 0.0f);
+	FVector BaseSizeActor = FVector(0.0f, 0.0f, 0.0f);
+	FVector BaseSizeMesh = FVector(0.0f, 0.0f, 0.0f);
+	FVector BaseSizeColl = FVector(0.0f, 0.0f, 0.0f);
 	float countTime = 0.0f;
 	float FallTime = 0.0f;
-	bool bIsReady = false;
-	bool bIsFalling = false;
+	bool bIsConfigured = false;
 	bool bIsHoming = false;
 	bool bIsHitPlayer = false;
 };
