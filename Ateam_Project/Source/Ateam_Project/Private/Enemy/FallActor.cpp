@@ -26,7 +26,22 @@ void AFallActor::BeginPlay()
 	if (EnemyData->IsConfigured())
 	{
 		PlayerPawn = UGameplayStatics::GetActorOfClass(GetWorld(), EnemyData->PlayerPawn);
-		ZoneActor = GetWorld()->SpawnActor<AActor>(EnemyData->DamageZone, FTransform(FVector(GetActorLocation().X, GetActorLocation().Y, 0.0f)));
+
+		// 床が見つかるまでましたを確認する
+		FVector StartTrace = GetActorLocation();
+		FVector EndTrace = StartTrace - FVector(0.f, 0.f, 10000.f);
+		FHitResult HitResult;
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(this);
+		QueryParams.AddIgnoredActor(PlayerPawn);
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_Visibility, QueryParams))
+		{
+			ZoneActor = GetWorld()->SpawnActor<AActor>(EnemyData->DamageZone, FTransform(FVector(GetActorLocation().X, GetActorLocation().Y, HitResult.ImpactPoint.Z)));
+		}
+		else
+		{
+			ZoneActor = GetWorld()->SpawnActor<AActor>(EnemyData->DamageZone, FTransform(FVector(GetActorLocation().X, GetActorLocation().Y, 0.0f)));
+		}
 		if (ZoneActor != nullptr)
 		{
 			ZoneMesh = ZoneActor->FindComponentByClass<UStaticMeshComponent>();
