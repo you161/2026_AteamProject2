@@ -22,6 +22,11 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
+	void SetEnemyData();
+	void SetBoxCollision();
+	void SpawnRandom();
+	void SpawnHoming();
+
 	// 敵のアセットデータ
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "EnemyData")
 	TObjectPtr<UEnemyData> EnemyData = nullptr;
