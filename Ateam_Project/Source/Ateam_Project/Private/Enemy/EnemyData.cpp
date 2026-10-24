@@ -7,7 +7,7 @@ UEnemyData::UEnemyData() {}
 
 bool UEnemyData::IsConfigured() const
 {
-	if (bHasHoming && PlayerPawn == nullptr)
+	if (PlayerPawn == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerPawn is not set in EnemyData."));
 		return false;
