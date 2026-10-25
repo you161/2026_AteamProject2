@@ -65,10 +65,14 @@ protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager")
 	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Object")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwable")
 	float MoveSpeed = 500.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Object")
+	//投げてから消えるまでの飛距離
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwable")
+	float MaxThrowDistance = 3000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwable")
 	FVector Offset = FVector(100.0f, 0.0f, 50.0f);
 
 private:
@@ -76,4 +80,6 @@ private:
 	EThrowableState CurrentState = EThrowableState::Pickable;
 	//飛んでいく方向を保存する変数
 	FVector CurrentDirection = FVector::ZeroVector;
+	//投げ始めの座標をほs￥損する変数
+	FVector ThrowStartLocation = FVector::ZeroVector;
 };

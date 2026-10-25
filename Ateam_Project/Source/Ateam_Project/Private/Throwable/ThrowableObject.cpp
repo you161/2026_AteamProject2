@@ -1,8 +1,9 @@
 
 #include "Throwable/ThrowableObject.h"
 #include "Components/SphereComponent.h"
-#include "Player/PlayerPawn.h"
 #include "Throwable/ThrowableManager.h"
+#include "Player/PlayerPawn.h"
+#include "Enemy/EnemyActor.h"
 
 AThrowableObject::AThrowableObject()
 {
@@ -76,6 +77,7 @@ void AThrowableObject::OnThrown(const FVector& Direction)
     SetActorEnableCollision(true);
 
     CurrentDirection = Direction;
+    ThrowStartLocation = GetActorLocation();
 }
 
 //投げられて指定方向に飛んでいく処理
@@ -88,6 +90,11 @@ void AThrowableObject::UpdateThrownMovement(float DeltaTime)
 
     const FVector Delta = CurrentDirection * MoveSpeed * DeltaTime;
     AddActorWorldOffset(Delta, true);
+
+    if (FVector::Dist(ThrowStartLocation, GetActorLocation()) >= MaxThrowDistance)
+    {
+        Destroy();
+    }
 }
 
 //他のアクタと重なった時に呼ばれる
@@ -108,6 +115,12 @@ void AThrowableObject::OnOverlap(
         {
             ThrowableManager->AddCandidate(this);
         }
+    }
+
+    if (Cast<AEnemyActor>(OtherActor))
+    {
+        Destroy();
+        return;
     }
 }
 
