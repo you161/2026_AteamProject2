@@ -31,7 +31,6 @@ FVector2D UInputManager::GetMouseInput() const
 void UInputManager::SetIsInteracting(bool bInteracting)
 {
 	isInteracting = bInteracting;
-	UE_LOG(LogTemp, Warning, TEXT("SetIsInteracting: %s"),isInteracting ? TEXT("true") : TEXT("false"));
 }
 
 //インタラクション中かどうかを取得する関数
