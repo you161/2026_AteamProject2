@@ -43,6 +43,9 @@ protected:
 	//生成位置のオフセット
 	UPROPERTY(EditAnywhere, Category = "Spawn")
 	FVector SpawnOffset = FVector::ZeroVector;
+	//生成座標
+	UPROPERTY(EditInstanceOnly, Category = "Spawn")
+	TArray<TObjectPtr<AActor>> SpawnLocations = {};
 
 private:
 
@@ -50,6 +53,9 @@ private:
 
 	//生成したオブジェクトの管理リスト
 	UPROPERTY(Transient)
-	TArray<TObjectPtr<AThrowableObject>> SpawnedObjects;
+	TArray<TObjectPtr<AThrowableObject>> SpawnedObjects = {};
+	//生成したオブジェクトと、使用したスポーン位置の管理リスト
+	UPROPERTY()
+	TMap<TObjectPtr<AThrowableObject>, int32> SpawnedObjectPointIndices;
 
 };

@@ -39,6 +39,7 @@ void AThrowableObjectSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+//投擲オブジェクトを生成する。
 void AThrowableObjectSpawner::SpawnObject()
 {
 	if (!IsValid(SourceObject))
@@ -46,36 +47,66 @@ void AThrowableObjectSpawner::SpawnObject()
 		return;
 	}
 
-	//破棄されたオブジェクトをリストから除く
-	SpawnedObjects.RemoveAll([](const TObjectPtr<AThrowableObject>& Obj)
+	//破棄されたオブジェクトを除く
+	for (auto It = SpawnedObjectPointIndices.CreateIterator(); It; ++It)
+	{
+		if (!IsValid(It.Key()))
 		{
-			return !IsValid(Obj);
-		});
+			It.RemoveCurrent();
+		}
+	}
 
 	//上限チェック
-	if (MaxSpawnCount > 0 && SpawnedObjects.Num() >= MaxSpawnCount)
+	if (MaxSpawnCount > 0 && SpawnedObjectPointIndices.Num() >= MaxSpawnCount)
 	{
 		return;
 	}
 
+	//生成されているSpanwPointの情報
+	TSet<int32> UsedIndices = {};
+	for (const TPair<TObjectPtr<AThrowableObject>, int32>& Pair : SpawnedObjectPointIndices)
+	{
+		UsedIndices.Add(Pair.Value);
+	}
+
+	//生成されていないSpawnPointの情報
+	TArray<int32> AvailableIndices = {};
+	for (int32 Index = 0; Index < SpawnLocations.Num(); ++Index)
+	{
+		if (IsValid(SpawnLocations[Index]) && !UsedIndices.Contains(Index))
+		{
+			AvailableIndices.Add(Index);
+		}
+	}
+
+	//空いている位置がなければ生成しない。
+	if (AvailableIndices.IsEmpty())
+	{
+		return;
+	}
+
+	//ランダムで生成位置を決定
+	const int32 SelectedIndex = AvailableIndices[FMath::RandRange(0, AvailableIndices.Num() - 1)];
+	const FVector SpawnLocation = SpawnLocations[SelectedIndex]->GetActorLocation();
+
+	//オブジェクトの生成
 	FActorSpawnParameters Params;
 	Params.Template = SourceObject;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	const FVector SpawnLocation = GetActorLocation() + SpawnOffset;
-
-	AThrowableObject* NewObj = GetWorld()->SpawnActor<AThrowableObject>(
+	AThrowableObject* NewObject = GetWorld()->SpawnActor<AThrowableObject>(
 		SourceObject->GetClass(),
 		SpawnLocation,
 		GetActorRotation(),
 		Params
 	);
 
-	if (IsValid(NewObj))
+	if (IsValid(NewObject))
 	{
-		NewObj->SetActorHiddenInGame(false);
-		NewObj->SetActorEnableCollision(true);
+		NewObject->SetActorLocation(SpawnLocation);
+		NewObject->SetActorHiddenInGame(false);
+		NewObject->SetActorEnableCollision(true);
 
-		SpawnedObjects.Add(NewObj);
+		SpawnedObjectPointIndices.Add(NewObject, SelectedIndex);
 	}
 }
