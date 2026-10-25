@@ -12,7 +12,7 @@ AThrowableObject::AThrowableObject()
     SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
     SetRootComponent(SphereCollision);
     SphereCollision->InitSphereRadius(150.0f);
-    SphereCollision->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
+    SphereCollision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 }
 
 void AThrowableObject::BeginPlay()
@@ -28,14 +28,11 @@ void AThrowableObject::BeginPlay()
             &AThrowableObject::OnOverlap
         );
 
-		//オーバーラップ終了時にOnEndOverlap関数を呼ぶように設定
-		SphereCollision->OnComponentEndOverlap.AddDynamic(
-			this,
-			&AThrowableObject::OnEndOverlap
-		);
-
-        //SphereCollisionが見つかった場合の確認ログ
-        UE_LOG(LogTemp, Warning, TEXT("SphereCollision found and saved to variable: %s"), *GetName());
+        //オーバーラップ終了時にOnEndOverlap関数を呼ぶように設定
+        SphereCollision->OnComponentEndOverlap.AddDynamic(
+            this,
+            &AThrowableObject::OnEndOverlap
+        );
     }
 
     CurrentState = EThrowableState::Pickable;
@@ -65,7 +62,7 @@ void AThrowableObject::OnPickedUp(AActor* Holder)
     AttachToActor(Holder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
     //プレイヤーから見た相対位置(前方100、高さ50)
-    SetActorRelativeLocation(FVector(100.0f, 0.0f, 50.0f));
+    SetActorRelativeLocation(Offset);
     SetActorRelativeRotation(FRotator::ZeroRotator);
 }
 
@@ -89,7 +86,7 @@ void AThrowableObject::UpdateThrownMovement(float DeltaTime)
         return;
     }
 
-    const FVector Delta = CurrentDirection * 500.0f * DeltaTime;
+    const FVector Delta = CurrentDirection * MoveSpeed * DeltaTime;
     AddActorWorldOffset(Delta, true);
 }
 
@@ -103,7 +100,7 @@ void AThrowableObject::OnOverlap(
     const FHitResult& SweepResult
 )
 {
-    //プレイヤー以外は無視
+    //プレイヤーに当たったとき
     if (Cast<APlayerPawn>(OtherActor))
     {
         //拾える状態のときだけ候補に登録する

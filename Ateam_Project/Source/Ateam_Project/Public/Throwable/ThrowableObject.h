@@ -64,9 +64,12 @@ protected:
 	//投げれるオブジェクトを管理するマネージャー
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager")
 	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
-	//オブジェクトが飛んでいく最終目標
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Player")
-	TObjectPtr<AActor> Enemy = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Object")
+	float MoveSpeed = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Object")
+	FVector Offset = FVector(100.0f, 0.0f, 50.0f);
 
 private:
 	//現在の状態を管理するステート
