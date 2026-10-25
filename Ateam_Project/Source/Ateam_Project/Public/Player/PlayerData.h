@@ -21,14 +21,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Rotate")
     float RotateSpeed = 500.0f;
 
-	//プレイヤーのジャンプ速度
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Jump")
-    float JumpSpeed = 600.0f;
-
-	//プレイヤーの重力
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Jump")
-    float Gravity = 980.0f;
-
 	//カメラの感度
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
     float CameraSensitivity = 1.0f;
