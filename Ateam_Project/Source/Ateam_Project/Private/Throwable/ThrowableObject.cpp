@@ -4,6 +4,7 @@
 #include "Throwable/ThrowableManager.h"
 #include "Player/PlayerPawn.h"
 #include "Enemy/EnemyActor.h"
+#include "Health/HealthManager.h"
 
 AThrowableObject::AThrowableObject()
 {
@@ -117,8 +118,10 @@ void AThrowableObject::OnOverlap(
         }
     }
 
-    if (Cast<AEnemyActor>(OtherActor))
+    //敵に当たった場合
+    if (Cast<AEnemyActor>(OtherActor) && IsValid(HealthManager))
     {
+        HealthManager->TakeDamage();
         Destroy();
         return;
     }
@@ -131,7 +134,7 @@ void AThrowableObject::OnEndOverlap(
 	int32 OtherBodyIndex
 )
 {
-	//触れたActorがプレイヤーかチェック
+	//プレイヤーかチェック
 	if (Cast<APlayerPawn>(OtherActor))
 	{
         if (IsValid(ThrowableManager))

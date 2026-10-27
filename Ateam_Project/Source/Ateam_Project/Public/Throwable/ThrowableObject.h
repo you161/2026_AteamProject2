@@ -8,6 +8,7 @@
 
 class USphereComponent;
 class AThrowableManager;
+class AHealthManager;
 
 /**
  *投げることができるアイテム
@@ -60,10 +61,13 @@ private:
 protected:
 	//当たり判定用
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
-	TObjectPtr<USphereComponent> SphereCollision;
+	TObjectPtr<USphereComponent> SphereCollision = nullptr;
 	//投げれるオブジェクトを管理するマネージャー
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager")
 	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
+	//HP
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager")
+	TObjectPtr<AHealthManager> HealthManager = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwable")
 	float MoveSpeed = 500.0f;
