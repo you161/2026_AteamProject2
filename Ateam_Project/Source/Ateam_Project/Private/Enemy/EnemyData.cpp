@@ -17,14 +17,19 @@ bool UEnemyData::IsConfigured() const
 		UE_LOG(LogTemp, Warning, TEXT("RandomActor is not set in EnemyData."));
 		return false;
 	}
+	if (bHasRandom && RandomZone == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RandomZone is not set in EnemyData."));
+		return false;
+	}
 	if (bHasHoming && HFallActor == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("HomingActor is not set in EnemyData."));
 		return false;
 	}
-	if (DamageZone == nullptr)
+	if (bHasHoming && HomingZone == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("DamageZone is not set in EnemyData."));
+		UE_LOG(LogTemp, Warning, TEXT("HomingZone is not set in EnemyData."));
 		return false;
 	}
 	if (!bHasRandom && !bHasHoming)

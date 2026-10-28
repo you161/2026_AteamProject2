@@ -23,9 +23,7 @@ void AFallActor::BeginPlay()
 	if (bIsConfigured)
 	{
 		SetPlayerPawn();
-		SpawnZoneActor();
 	}
-	SetBaseSize();
 	countTime = 0.0f;
 	FallTime = 0.0f;
 	bIsHoming = false;
@@ -133,6 +131,11 @@ void AFallActor::SetBaseSize()
 
 void AFallActor::SpawnZoneActor()
 {
+	auto zone = EnemyData->RandomZone;
+	if (bIsHoming)
+	{
+		zone = EnemyData->HomingZone;
+	}
 	// 床が見つかるまでましたを確認する
 	FVector StartTrace = GetActorLocation();
 	FVector EndTrace = StartTrace - FVector(0.f, 0.f, 10000.f);
@@ -143,12 +146,12 @@ void AFallActor::SpawnZoneActor()
 	if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_Visibility, QueryParams))
 	{
 		StartTrace.Z = HitResult.ImpactPoint.Z;
-		ZoneActor = GetWorld()->SpawnActor<AActor>(EnemyData->DamageZone, FTransform(StartTrace));
+		ZoneActor = GetWorld()->SpawnActor<AActor>(zone, FTransform(StartTrace));
 	}
 	else
 	{
 		StartTrace.Z = 0.0;
-		ZoneActor = GetWorld()->SpawnActor<AActor>(EnemyData->DamageZone, FTransform(StartTrace));
+		ZoneActor = GetWorld()->SpawnActor<AActor>(zone, FTransform(StartTrace));
 	}
 	if (ZoneActor != nullptr)
 	{
@@ -174,15 +177,19 @@ void AFallActor::UpdateSize(float WaringTime)
 
 void AFallActor::UpdateLocation(float DeltaTime, float WarningTime, float FallSpeed)
 {
-	FVector ZoneLocation = ZoneActor->GetActorLocation();
 	FVector currentLocation = GetActorLocation();
+	FVector ZoneLocation = ZoneActor->GetActorLocation();
 
 	if (bIsHoming)
 	{
-		ZoneLocation.X = PlayerPawn->GetActorLocation().X;
-		ZoneLocation.Y = PlayerPawn->GetActorLocation().Y;
-		currentLocation.X = PlayerPawn->GetActorLocation().X;
-		currentLocation.Y = PlayerPawn->GetActorLocation().Y;
+		FVector direction = PlayerPawn->GetActorLocation() - currentLocation;
+		FVector Zdirection = PlayerPawn->GetActorLocation() - ZoneLocation;
+		direction.Z = 0.0f;
+		Zdirection.Z = 0.0f;
+		direction.Normalize();
+		Zdirection.Normalize();
+		currentLocation += EnemyData->HomingSpeed * direction;
+		ZoneLocation += EnemyData->HomingSpeed * Zdirection;
 		if (countTime > WarningTime)
 		{
 			bIsHoming = false;
@@ -195,13 +202,15 @@ void AFallActor::UpdateLocation(float DeltaTime, float WarningTime, float FallSp
 		currentLocation.Z -= FallSpeed * 0.5f * 9.80665f * FallTime * FallTime;
 	}
 
-	ZoneActor->SetActorRelativeLocation(ZoneLocation);
 	SetActorLocation(currentLocation);
+	ZoneActor->SetActorRelativeLocation(ZoneLocation);
 }
 
-void AFallActor::SetHoming()
+void AFallActor::SetHoming(bool flag)
 {
-	bIsHoming = true;
+	bIsHoming = flag;
+	SpawnZoneActor();
+	SetBaseSize();
 }
 
 UFUNCTION()
