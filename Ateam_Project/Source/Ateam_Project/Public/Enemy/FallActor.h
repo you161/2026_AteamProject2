@@ -47,6 +47,7 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
+	UFUNCTION()
 	void OnOverlapEnd(
 		UPrimitiveComponent* OverlappedComp,
 		AActor* OtherActor,
