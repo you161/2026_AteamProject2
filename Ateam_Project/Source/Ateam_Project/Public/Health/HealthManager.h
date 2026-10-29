@@ -5,6 +5,8 @@
 #include "GameFramework/Actor.h"
 #include "HealthManager.generated.h"
 
+class UHitPointBar;
+
 /*
 * HP管理クラス
 */
@@ -25,7 +27,7 @@ public:
 	//ダメージ分HPを減らす関数
 	void TakeDamage();
 	//HP参照関数
-	int32 GetHealth();
+	int32 GetHealth()const;
 
 protected:
 	//最大HP

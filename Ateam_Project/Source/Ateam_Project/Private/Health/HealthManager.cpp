@@ -23,11 +23,10 @@ void AHealthManager::TakeDamage()
 	}
 
 	CurrentHealth = FMath::Max(0, CurrentHealth - DamageAmount);
-	UE_LOG(LogTemp, Warning, TEXT("現在HP: %d / %d"), CurrentHealth, MaxHealth);
 }
 
 //HP参照関数
-int32 AHealthManager::GetHealth()
+int32 AHealthManager::GetHealth()const
 {
 	return CurrentHealth;
 }
