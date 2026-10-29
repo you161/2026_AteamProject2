@@ -66,7 +66,7 @@ protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager")
 	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
 	//HP
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager")
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "EnemyHealthManager")
 	TObjectPtr<AHealthManager> HealthManager = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwable")
