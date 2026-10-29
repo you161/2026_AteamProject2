@@ -3,6 +3,7 @@
 #include "Throwable/ThrowableObject.h"
 #include "Input/InputManager.h"
 #include "Input/InputReceiver.h"
+#include "Player/PlayerPawn.h"
 
 AThrowableManager::AThrowableManager()
 {
@@ -30,6 +31,7 @@ void AThrowableManager::Tick(float DeltaTime)
 		if (IsValid(HeldItem))
 		{
 			Throw();
+			PlayerPawn->SetHasObject(false);
 		}
 		else
 		{
@@ -37,6 +39,7 @@ void AThrowableManager::Tick(float DeltaTime)
 			if (IsValid(Target))
 			{
 				PickUp(Target);
+				PlayerPawn->SetHasObject(true);
 			}
 		}
 	}

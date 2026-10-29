@@ -21,6 +21,8 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	void SetHasObject(bool CurrentFlag);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -64,4 +66,6 @@ private:
 	FVector CurrentCameraRight = FVector::ZeroVector;
 	//プレイヤーが移動中かどうかを保持する変数
 	bool isMoving = false;
+	//減速中
+	bool hasObject = false;
 };

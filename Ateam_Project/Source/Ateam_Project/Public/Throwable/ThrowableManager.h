@@ -7,6 +7,7 @@
 
 class AThrowableObject;
 class UInputManager;
+class APlayerPawn;
 
 /**
  * 近くのアイテムを拾うためのマネージャークラス
@@ -47,6 +48,9 @@ protected:
 	//プレイヤー
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Player")
 	TObjectPtr<AActor> Player = nullptr;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Player")
+	TObjectPtr<APlayerPawn> PlayerPawn = nullptr;
 
 private:
 	//拾える範囲にあるアイテムの候補リスト

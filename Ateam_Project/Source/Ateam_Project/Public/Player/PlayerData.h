@@ -17,6 +17,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
     float MoveSpeed = 500.0f;
 
+    //プレイヤーがオブジェクトを持っているときの減速率
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+    float DecelerationRate = 0.5f;
+
 	//プレイヤーの回転速度
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Rotate")
     float RotateSpeed = 500.0f;

@@ -45,6 +45,7 @@ void APlayerPawn::BeginPlay()
 	}
 
 	isMoving = false;
+	hasObject = false;
 }
 
 void APlayerPawn::Tick(float DeltaTime)
@@ -91,7 +92,14 @@ void APlayerPawn::Move(float DeltaTime)
 	//入力をカメラの向き基準のワールド方向に変換
 	CurrentDirection = (CurrentCameraForward * MoveInput.Y + CurrentCameraRight * MoveInput.X).GetSafeNormal();
 
-	const FVector Delta = CurrentDirection * PlayerData->MoveSpeed * DeltaTime;
+	float CurrentDecelerationRate = 1.0f;
+
+	if (hasObject)
+	{
+		CurrentDecelerationRate = PlayerData->DecelerationRate;
+	}
+
+	const FVector Delta = CurrentDirection * PlayerData->MoveSpeed * CurrentDecelerationRate * DeltaTime;
 
 	if (!Delta.IsNearlyZero())
 	{
@@ -176,4 +184,9 @@ void APlayerPawn::InitializeInputManager()
 	}
 
 	InputManager = InputReceiver->GetInputManager();
+}
+
+void APlayerPawn::SetHasObject(bool CurrentFlag)
+{
+	hasObject = CurrentFlag;
 }
