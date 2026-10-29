@@ -81,8 +81,9 @@ void AEnemyActor::SpawnRandom()
 			double minY = EnemyData->RSetArea[index].Y;
 			double maxX = EnemyData->RSetArea[index].Z;
 			double maxY = EnemyData->RSetArea[index].W;
-			GetWorld()->SpawnActor<AActor>(EnemyData->RFallActor,
+			AFallActor* RandomActor = GetWorld()->SpawnActor<AFallActor>(EnemyData->RFallActor,
 				FTransform(FVector(FMath::RandRange(minX, maxX), FMath::RandRange(minY, maxY), EnemyData->RFallHeight)));
+			RandomActor->SetHoming(false);
 		}
 		RcountTime = 0.0f;
 	}
@@ -95,8 +96,9 @@ void AEnemyActor::SpawnHoming()
 		AActor* PlayerPawn = UGameplayStatics::GetActorOfClass(GetWorld(), EnemyData->PlayerPawn);
 		AFallActor* HomingActor = GetWorld()->SpawnActor<AFallActor>(EnemyData->HFallActor,
 			FTransform(FVector(PlayerPawn->GetActorLocation().X, PlayerPawn->GetActorLocation().Y, EnemyData->HFallHeight)));
-		HomingActor->SetHoming();
+		HomingActor->SetHoming(true);
 		HcountTime = 0.0f;
+		FActorSpawnParameters sp;
 	}
 }
 

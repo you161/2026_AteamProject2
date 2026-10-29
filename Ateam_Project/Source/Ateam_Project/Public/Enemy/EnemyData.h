@@ -34,6 +34,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
 	TSubclassOf<AActor> RFallActor = nullptr;
 
+	// 攻撃範囲
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
+	TSubclassOf<AActor> RandomZone = nullptr;
+
+	// ランダム攻撃の予告時間
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
+	float RWarningTime = 1.0f;
+
 	// 攻撃の数
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
 	int32 ActorCount = 1;
@@ -64,6 +72,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
 	TSubclassOf<AActor> HFallActor = nullptr;
 
+	// 攻撃範囲
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
+	TSubclassOf<AActor> HomingZone = nullptr;
+
+	// 追従速度
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
+	float HomingSpeed = 5.0f;
+
+	// 追従攻撃の予告時間
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
+	float HWarningTime = 1.0f;
+
 	// 生成高さ
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
 	float HFallHeight = 1000.0f;
@@ -75,18 +95,4 @@ public:
 	// 攻撃の時間
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
 	float HCooldownTime = 0.0f;
-
-	//=======================================================================
-	
-	// ダメージの予告範囲
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DamageZone")
-	TSubclassOf<AActor> DamageZone = nullptr;
-
-	// ランダム攻撃の予告時間
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DamageZone")
-	float RWarningTime = 1.0f;
-
-	// 追従攻撃の予告時間
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DamageZone")
-	float HWarningTime = 1.0f;
 };

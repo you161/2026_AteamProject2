@@ -19,7 +19,7 @@ class ATEAM_PROJECT_API AFallActor : public AActor
 public:	
 	AFallActor();
 
-	void SetHoming();
+	void SetHoming(bool flag);
 
 protected:
 	virtual void BeginPlay() override;
