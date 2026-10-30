@@ -7,6 +7,7 @@
 #include "UIManager.generated.h"
 
 class UHitPointBar;
+class AHealthManager;
 
 UCLASS()
 class ATEAM_PROJECT_API AUIManager : public AActor
@@ -34,6 +35,9 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UHitPointBar> EnemyHPBar;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HealthManager")
+	TObjectPtr<AHealthManager> HealthManager = nullptr;
 
 public:
 
