@@ -121,7 +121,7 @@ void AThrowableObject::OnOverlap(
     //敵に当たった場合
     if (Cast<AEnemyActor>(OtherActor) && IsValid(HealthManager))
     {
-        HealthManager->TakeDamage();
+        HealthManager->TakeDamage(CharactorType::Enemy);
         Destroy();
         return;
     }
