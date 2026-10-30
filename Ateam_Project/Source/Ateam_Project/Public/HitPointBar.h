@@ -8,10 +8,12 @@
 
 class UCanvasPanel;
 class UImage;
+class UHitPointBar;
 
 /**
  *   HPバーの処理
  */
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHPBarEmptied, UHitPointBar*);
 UCLASS()
 class ATEAM_PROJECT_API UHitPointBar : public UUserWidget
 {
@@ -41,6 +43,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "aaa")
     float ShakeTime = 1.0f;
 
+    FOnHPBarEmptied OnHPBarEmptied;   //バーが空になりきったら通知
+
 protected:
     virtual void NativeConstruct() override;
     virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
@@ -53,4 +57,5 @@ private:
     bool bIsImageFound = false;
     bool bIsShake = false;
 
+    bool bIsEmptyNotified = false;    //通知済みフラグ
 };

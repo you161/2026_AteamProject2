@@ -39,6 +39,7 @@ void UHitPointBar::NativeConstruct()
     }
     countTime = 0.0f;
     bIsShake = false;
+    bIsEmptyNotified = false;
 }
 
 void UHitPointBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -72,6 +73,13 @@ void UHitPointBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
     {
         damageSize.X = FMath::Max(currentSize.X, damageSize.X - MoveSpeed * InDeltaTime);
         damageBar->SetRenderScale(damageSize);
+
+        //縮み終わった瞬間 かつ HPが0なら、一度だけ通知
+        if (damageSize.X <= currentSize.X && currentSize.X <= 0.0f && !bIsEmptyNotified)
+        {
+            bIsEmptyNotified = true;
+            OnHPBarEmptied.Broadcast(this);
+        }
     }
     
     // HPが増えたら
