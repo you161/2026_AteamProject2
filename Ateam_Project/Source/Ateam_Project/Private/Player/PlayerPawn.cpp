@@ -175,11 +175,7 @@ void APlayerPawn::InitializeInputManager()
 
 	if (!IsValid(InputReceiver))
 	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("[PlayerPawn] InputReceiver is invalid.")
-		);
+		UE_LOG(LogTemp,Warning,TEXT("[PlayerPawn] InputReceiver is invalid."));
 		return;
 	}
 
