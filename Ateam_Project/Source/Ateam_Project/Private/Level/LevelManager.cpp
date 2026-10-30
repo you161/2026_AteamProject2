@@ -14,8 +14,9 @@ void ALevelManager::BeginPlay()
 
 void ALevelManager::LoadTitleLevel()
 {
-	if (!TitleLevel.IsValid())
+	if (TitleLevel.IsNull())
 	{
+		UE_LOG(LogTemp, Error, TEXT("TitleLevel is null"));
 		return;
 	}
 
@@ -24,8 +25,9 @@ void ALevelManager::LoadTitleLevel()
 
 void ALevelManager::LoadMovieLevel()
 {
-	if (!MovieLevel.IsValid())
+	if (MovieLevel.IsNull())
 	{
+		UE_LOG(LogTemp, Error, TEXT("MovieLevel is null"));
 		return;
 	}
 
@@ -34,8 +36,9 @@ void ALevelManager::LoadMovieLevel()
 
 void ALevelManager::LoadMainLevel()
 {
-	if (!MainLevel.IsValid())
+	if (MainLevel.IsNull())
 	{
+		UE_LOG(LogTemp, Error, TEXT("MainLevel is null"));
 		return;
 	}
 
@@ -44,8 +47,9 @@ void ALevelManager::LoadMainLevel()
 
 void ALevelManager::LoadClearLevel()
 {
-	if (!ClearLevel.IsValid())
+	if (ClearLevel.IsNull())
 	{
+		UE_LOG(LogTemp, Error, TEXT("ClearLevel is null"));
 		return;
 	}
 
@@ -54,8 +58,9 @@ void ALevelManager::LoadClearLevel()
 
 void ALevelManager::LoadGameOverLevel()
 {
-	if (!GameOverLevel.IsValid())
+	if (GameOverLevel.IsNull())
 	{
+		UE_LOG(LogTemp, Error, TEXT("GameOverLevel is null"));
 		return;
 	}
 
@@ -66,7 +71,13 @@ void ALevelManager::LoadLevel(TSoftObjectPtr<UWorld> NextLevel)const
 {
 	if (!IsValid(GetWorld()))
 	{
+		UE_LOG(LogTemp, Error, TEXT("GetWorld is null"));
 		return;
+	}
+
+	if (NextLevel.IsNull())
+	{
+		UE_LOG(LogTemp, Error, TEXT("NextLevel is null"));
 	}
 
 	UGameplayStatics::OpenLevelBySoftObjectPtr(GetWorld(), NextLevel);
