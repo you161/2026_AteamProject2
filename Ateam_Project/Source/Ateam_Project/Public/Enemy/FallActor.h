@@ -10,6 +10,7 @@ class UEnemyData;
 class UStaticMeshComponent;
 class UBoxComponent;
 class UCapsuleComponent;
+class AHealthManager;
 
 UCLASS()
 class ATEAM_PROJECT_API AFallActor : public AActor
@@ -68,4 +69,6 @@ private:
 	bool bIsConfigured = false;
 	bool bIsHoming = false;
 	bool bIsHitPlayer = false;
+
+	TObjectPtr<AHealthManager> HealthManager = nullptr;
 };

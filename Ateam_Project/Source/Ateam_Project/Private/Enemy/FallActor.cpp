@@ -7,6 +7,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Enemy/EnemyData.h"
+#include "Health/HealthManager.h"
 
 AFallActor::AFallActor()
 {
@@ -28,6 +29,8 @@ void AFallActor::BeginPlay()
 	FallTime = 0.0f;
 	bIsHoming = false;
 	bIsHitPlayer = false;
+
+	HealthManager = Cast<AHealthManager>(UGameplayStatics::GetActorOfClass(GetWorld(),AHealthManager::StaticClass()));
 }
 
 void AFallActor::Tick(float DeltaTime)
@@ -235,6 +238,15 @@ void AFallActor::OnOverlapBegin(
 		{
 			if (bIsHitPlayer)
 			{
+				if (IsValid(HealthManager))
+				{
+					HealthManager->TakeDamage(CharactorType::Player);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("HealthManager is null in AFallActor::OnOverlapBegin"));
+				}
+
 				UE_LOG(LogTemp, Warning, TEXT("It hit the player!"));
 			}
 			ZoneActor->Destroy();
