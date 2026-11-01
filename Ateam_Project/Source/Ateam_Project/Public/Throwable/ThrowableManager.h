@@ -7,10 +7,9 @@
 
 class AThrowableObject;
 class UInputManager;
-class APlayerPawn;
 
 /**
- * 近くのアイテムを拾うためのマネージャークラス
+ * 拾ったオブジェクトマネージャークラス
  */
 UCLASS()
 class ATEAM_PROJECT_API AThrowableManager : public AActor
@@ -29,15 +28,14 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	void AddCandidate(AThrowableObject* Item);
-	void RemoveCandidate(AThrowableObject* Item);
+	//アイテムを拾った時の処理
+	void PickUp(AThrowableObject* Target);
+
+	//アイテムを投げた時の処理
+	int32 GetCollectedCount() const { return CollectedCount; }
 
 private:
 
-	//候補の中から一番近いアイテムを返す(なければnullptr)
-	AThrowableObject* FindNearestItem() const;
-	//アイテムを拾った時の処理
-	void PickUp(AThrowableObject* Target);
 	//InputManagerを初期化する関数
 	void InitializeInputManager();
 	//アイテムを投げた時の処理
@@ -46,17 +44,13 @@ private:
 protected:
 
 	//プレイヤー
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Player")
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager|Player")
 	TObjectPtr<AActor> Player = nullptr;
-
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Player")
-	TObjectPtr<APlayerPawn> PlayerPawn = nullptr;
+	//拾ったオブジェクトの最大数
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager|MaxObjectCount")
+	int32 MaxObjectCount = 0;
 
 private:
-	//拾える範囲にあるアイテムの候補リスト
-	UPROPERTY(Transient)
-	TArray<TObjectPtr<AThrowableObject>> NearbyItems;
-
 	//現在持っているアイテム
 	UPROPERTY(Transient)
 	TObjectPtr<AThrowableObject> HeldItem = nullptr;
@@ -65,4 +59,6 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UInputManager> InputManager = nullptr;
 
+	//回収したアイテム数
+	int32 CollectedCount = 0;
 };

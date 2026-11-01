@@ -3,7 +3,6 @@
 #include "Throwable/ThrowableObject.h"
 #include "Input/InputManager.h"
 #include "Input/InputReceiver.h"
-#include "Player/PlayerPawn.h"
 
 AThrowableManager::AThrowableManager()
 {
@@ -31,76 +30,46 @@ void AThrowableManager::Tick(float DeltaTime)
 		if (IsValid(HeldItem))
 		{
 			Throw();
-			PlayerPawn->SetHasObject(false);
-		}
-		else
-		{
-			AThrowableObject* Target = FindNearestItem();
-			if (IsValid(Target))
-			{
-				PickUp(Target);
-				PlayerPawn->SetHasObject(true);
-			}
 		}
 	}
-}
-
-//近くのアイテムの候補リストに追加する
-void AThrowableManager::AddCandidate(AThrowableObject* Item)
-{
-	if (IsValid(Item))
-	{
-		NearbyItems.AddUnique(Item);
-	}
-}
-
-//近くのアイテムの候補リストから削除する
-void AThrowableManager::RemoveCandidate(AThrowableObject* Item)
-{
-	if (IsValid(Item)) 
-	{
-		NearbyItems.Remove(Item);
-	}
-}
-
-//近くのアイテムの中から一番近いものを返す
-AThrowableObject* AThrowableManager::FindNearestItem() const
-{
-	if (NearbyItems.IsEmpty() || !IsValid(Player))
-	{
-		return nullptr;
-	}
-
-	AThrowableObject* NearestItem = NearbyItems[0];
-
-	for (int i = 1; i < NearbyItems.Num(); ++i)
-	{
-		float NearestDistance = FVector::Dist(NearestItem->GetActorLocation(), Player->GetActorLocation());
-		float CurrentDistance = FVector::Dist(NearbyItems[i]->GetActorLocation(), Player->GetActorLocation());
-
-		if (CurrentDistance < NearestDistance)
-		{
-			NearestItem = NearbyItems[i];
-		}
-	}
-
-	return NearestItem;
 }
 
 //現在持っているアイテムを設定する
 void AThrowableManager::PickUp(AThrowableObject* Target)
 {
-	HeldItem = Target;
-	NearbyItems.Remove(Target);
-	HeldItem->OnPickedUp(Player);
+	if (!IsValid(Target)) 
+	{
+		return;
+	}
+
+	if (CollectedCount >= MaxObjectCount)
+	{
+		return;
+	}
+
+	if (!IsValid(HeldItem))
+	{
+		HeldItem = Target;
+		CollectedCount = 0;
+		HeldItem->OnPickedUp(Player);
+	}
+	else
+	{
+		CollectedCount++;
+		HeldItem->OnPickedUp(Player);
+		Target->Destroy();
+	}
 }
 
+//アイテムを投げる処理
 void AThrowableManager::Throw()
 {
 	HeldItem->OnThrown(Player->GetActorForwardVector());
 	HeldItem = nullptr;
+	CollectedCount = 0;
 }
 
+//InputManagerを初期化する関数
 void AThrowableManager::InitializeInputManager()
 {
 	if (AInputReceiver* InputReceiver = Cast<AInputReceiver>(GetWorld()->GetFirstPlayerController()))
