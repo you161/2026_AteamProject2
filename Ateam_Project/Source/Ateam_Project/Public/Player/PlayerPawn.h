@@ -7,6 +7,7 @@
 class UInputManager;
 class UPlayerData;
 class UCapsuleComponent;
+class AThrowableManager;
 
 /**
  * 入力の値を受け取り、プレイヤーの移動やジャンプの状態を管理するクラス
@@ -21,9 +22,11 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	void SetHasObject(bool CurrentFlag);
+	//プレイヤーが移動中かどうかを取得する関数
+	bool GetIsMoving() const { return bisMoving; }
 
 protected:
+
 	virtual void BeginPlay() override;
 
 	//コントローラーがPossessしたときに呼ばれる
@@ -43,11 +46,14 @@ private:
 protected:
 
 	//プレイヤーのデータを格納するデータアセット
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Player")
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|Data")
 	TObjectPtr<UPlayerData> PlayerData = nullptr;
 	//カメラを制御するアクター
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Camera")
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|Camera")
 	TObjectPtr<AActor> Camera = nullptr;
+	//拾ったオブジェクトを管理するマネージャー
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|Throwable")
+	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
 	//プレイヤーの当たり判定を行うコリジョン
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
 	TObjectPtr<UCapsuleComponent> CapsuleCollision;
@@ -65,7 +71,7 @@ private:
 	//カメラの現在の右方向を保持する変数
 	FVector CurrentCameraRight = FVector::ZeroVector;
 	//プレイヤーが移動中かどうかを保持する変数
-	bool isMoving = false;
+	bool bisMoving = false;
 	//減速中
-	bool hasObject = false;
+	bool bhasObject = false;
 };

@@ -121,6 +121,34 @@ void AInputReceiver::SetupInputComponent()
 	{
 		UE_LOG(LogTemp, Error, TEXT("InteractAction is not set in InputReceiver."));
 	}
+
+	if (IsValid(DashAction))
+	{
+		EnhancedInputComponent->BindAction(
+			DashAction,
+			ETriggerEvent::Triggered,
+			this,
+			&AInputReceiver::Dash
+		);
+
+		EnhancedInputComponent->BindAction(
+			DashAction,
+			ETriggerEvent::Canceled,
+			this,
+			&AInputReceiver::StopDash
+		);
+
+		EnhancedInputComponent->BindAction(
+			DashAction,
+			ETriggerEvent::Completed,
+			this,
+			&AInputReceiver::StopDash
+		);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("DashAction is not set in InputReceiver."));
+	}
 }
 
 //入力をInputManagerに渡す関数群
@@ -147,6 +175,7 @@ void AInputReceiver::Look(const FInputActionValue& Value)
 	InputManager->SetMouseInput(Value.Get<FVector2D>());
 }
 
+//インタラクション入力をInputManagerに渡す関数群
 void AInputReceiver::Interact()
 {
 	if (!IsValid(InputManager))
@@ -156,6 +185,30 @@ void AInputReceiver::Interact()
 	}
 
 	InputManager->SetIsInteracting(true);
+}
+
+//ダッシュ入力をInputManagerに渡す関数群
+void AInputReceiver::Dash()
+{
+	if (!IsValid(InputManager))
+	{
+		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in Dash function."));
+		return;
+	}
+
+	InputManager->SetIsDashing(true);
+}
+
+//ダッシュ入力が終了したときに呼ばれる関数
+void AInputReceiver::StopDash()
+{
+	if (!IsValid(InputManager))
+	{
+		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in StopDash function."));
+		return;
+	}
+
+	InputManager->SetIsDashing(false);
 }
 
 UInputManager* AInputReceiver::GetInputManager()

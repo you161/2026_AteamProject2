@@ -30,13 +30,25 @@ FVector2D UInputManager::GetMouseInput() const
 //インタラクション中かどうかを設定する関数
 void UInputManager::SetIsInteracting(bool bInteracting)
 {
-	isInteracting = bInteracting;
+	bisInteracting = bInteracting;
 }
 
 //インタラクション中かどうかを取得する関数
 bool UInputManager::ConsumeInteract()
 {
-	const bool bResult = isInteracting;
-	isInteracting = false;
+	const bool bResult = bisInteracting;
+	bisInteracting = false;
 	return bResult;
+}
+
+//ダッシュ中かどうかを設定する関数
+void UInputManager::SetIsDashing(bool bDashing)
+{
+	bisDashing = bDashing;
+}
+
+//ダッシュ中かどうかを取得する関数
+bool UInputManager::GetIsDashing() const
+{
+	return bisDashing;
 }

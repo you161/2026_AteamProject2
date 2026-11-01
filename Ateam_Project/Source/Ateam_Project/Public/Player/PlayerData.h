@@ -17,9 +17,17 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
     float MoveSpeed = 500.0f;
 
-    //プレイヤーがオブジェクトを持っているときの減速率
+	//ダッシュ時の速度倍率
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
-    float DecelerationRate = 0.5f;
+    float DashSpeedRate = 1.5f;
+
+    //アイテムが増えるごとに下がる速度率
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+    float SlowPerScale = 0.1f;
+
+    //最低減速度率
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+    float MinSpeedRate = 0.2f;
 
 	//プレイヤーの回転速度
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Rotate")

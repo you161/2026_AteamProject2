@@ -34,6 +34,10 @@ private:
 	void Look(const FInputActionValue& Value);
 	//インタラクトアクションを設定する関数
 	void Interact();
+	//ダッシュアクションを設定する関数
+	void Dash();
+	//ダッシュアクションが終了したときに呼ばれる関数
+	void StopDash();
 
 private:
 	//入力マッピングコンテキスト
@@ -51,6 +55,10 @@ private:
 	//インタラクション入力
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> InteractAction = nullptr;
+
+	//ダッシュ入力
+	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> DashAction = nullptr;
 
 	//入力管理を行うオブジェクト
 	TObjectPtr<UInputManager> InputManager = nullptr;

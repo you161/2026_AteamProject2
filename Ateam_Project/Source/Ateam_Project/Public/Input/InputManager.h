@@ -21,6 +21,8 @@ public:
 	void SetMouseInput(const FVector2D& Input);
 	//インタラクション中かどうかを設定する関数
 	void SetIsInteracting(bool bInteracting);
+	//ダッシュ中かどうかを設定する関数
+	void SetIsDashing(bool bDashing);
 
 	//入力値を取得する関数
 	FVector2D GetMoveInput() const;
@@ -28,6 +30,8 @@ public:
 	FVector2D GetMouseInput() const;
 	//インタラクション中かどうかを取得する関数
 	bool ConsumeInteract();
+	//ダッシュ中かどうかを取得する関数
+	bool GetIsDashing() const;
 
 private:
 
@@ -36,5 +40,7 @@ private:
 	//マウスの入力値を保持する変数
 	FVector2D MouseInput = FVector2D::ZeroVector;
 	//インタラクション中かどうかを保持する変数
-	bool isInteracting = false;
+	bool bisInteracting = false;
+	//ダッシュ中かどうかを保持する変数
+	bool bisDashing = false;
 };

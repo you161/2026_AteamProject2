@@ -3,6 +3,7 @@
 #include "Input/InputManager.h"
 #include "Player/PlayerData.h"
 #include "Components/CapsuleComponent.h"
+#include "Throwable/ThrowableManager.h"
 
 APlayerPawn::APlayerPawn()
 {
@@ -44,8 +45,8 @@ void APlayerPawn::BeginPlay()
 		UE_LOG(LogTemp,Error,TEXT("Camera is not set in PlayerPawn."));
 	}
 
-	isMoving = false;
-	hasObject = false;
+	bisMoving = false;
+	bhasObject = false;
 }
 
 void APlayerPawn::Tick(float DeltaTime)
@@ -67,19 +68,6 @@ void APlayerPawn::Move(float DeltaTime)
 {
 	const FVector2D MoveInput = InputManager->GetMoveInput();
 
-	//if (!isMoving)
-	//{
-	//	//移動中じゃないときはカメラの向きを更新する
-	//	CurrentCameraForward = Camera->GetActorForwardVector();
-	//	CurrentCameraRight = Camera->GetActorRightVector();
-
-	//	CurrentCameraForward.Z = 0.0f;
-	//	CurrentCameraRight.Z = 0.0f;
-
-	//	CurrentCameraForward.Normalize();
-	//	CurrentCameraRight.Normalize();
-	//}
-
 	CurrentCameraForward = Camera->GetActorForwardVector();
 	CurrentCameraRight = Camera->GetActorRightVector();
 
@@ -92,23 +80,26 @@ void APlayerPawn::Move(float DeltaTime)
 	//入力をカメラの向き基準のワールド方向に変換
 	CurrentDirection = (CurrentCameraForward * MoveInput.Y + CurrentCameraRight * MoveInput.X).GetSafeNormal();
 
-	float CurrentDecelerationRate = 1.0f;
+	//プレイヤーの移動速度を計算する
+	int32 ObjectCount = ThrowableManager->GetCollectedCount();
+	float DecreaseRate = FMath::Clamp(1.0f - ObjectCount * PlayerData->SlowPerScale, PlayerData->MinSpeedRate, 1.0f);
 
-	if (hasObject)
+	//ダッシュ中は速度倍率を適用する
+	if (InputManager->GetIsDashing())
 	{
-		CurrentDecelerationRate = PlayerData->DecelerationRate;
+		DecreaseRate *= PlayerData->DashSpeedRate;
 	}
 
-	const FVector Delta = CurrentDirection * PlayerData->MoveSpeed * CurrentDecelerationRate * DeltaTime;
+	const FVector Delta = CurrentDirection * PlayerData->MoveSpeed * DecreaseRate * DeltaTime;
 
 	if (!Delta.IsNearlyZero())
 	{
 		AddActorWorldOffset(Delta, true);
-		isMoving = true;
+		bisMoving = true;
 	}
 	else
 	{
-		isMoving = false;
+		bisMoving = false;
 	}
 }
 
@@ -180,9 +171,4 @@ void APlayerPawn::InitializeInputManager()
 	}
 
 	InputManager = InputReceiver->GetInputManager();
-}
-
-void APlayerPawn::SetHasObject(bool CurrentFlag)
-{
-	hasObject = CurrentFlag;
 }
