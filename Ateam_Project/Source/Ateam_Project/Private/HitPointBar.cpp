@@ -103,6 +103,7 @@ void UHitPointBar::UpdateHitPointBar(float MaxHP, float Damage)
     // HPが減る
     if (currentSize.X > 1.0f - param)
     {
+        countTime = 0.0f;
         bIsShake = true;
         currentSize.X = 1.0f - param;
         currentBar->SetRenderScale(currentSize);
