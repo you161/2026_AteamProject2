@@ -64,36 +64,64 @@ void AChangeLevel::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 		return;
 	}
 
-	if (IsValid(ChangeLevelAction))
+	if (IsValid(NextLevelAction))
 	{
-		EnhancedInputComponent->BindAction(
-			ChangeLevelAction,
+		/*EnhancedInputComponent->BindAction(
+			NextLevelAction,
 			ETriggerEvent::Triggered,
 			this,
-			&AChangeLevel::ChangeLevel
-		);
+			&AChangeLevel::NextLevel
+		);*/
 
 		EnhancedInputComponent->BindAction(
-			ChangeLevelAction,
+			NextLevelAction,
 			ETriggerEvent::Completed,
 			this,
-			&AChangeLevel::ChangeLevel
+			&AChangeLevel::NextLevel
 		);
 
 		EnhancedInputComponent->BindAction(
-			ChangeLevelAction,
+			NextLevelAction,
 			ETriggerEvent::Canceled,
 			this,
-			&AChangeLevel::ChangeLevel
+			&AChangeLevel::NextLevel
 		);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("ChangeLevelAction is not set in ChangeLevel"));
+		UE_LOG(LogTemp, Error, TEXT("NextLevelAction is not set in ChangeLevel"));
+	}
+
+	if (IsValid(PreviousLevelAction))
+	{
+		/*EnhancedInputComponent->BindAction(
+			PreviousLevelAction,
+			ETriggerEvent::Triggered,
+			this,
+			&AChangeLevel::PreviousLevel
+		);*/
+
+		EnhancedInputComponent->BindAction(
+			PreviousLevelAction,
+			ETriggerEvent::Completed,
+			this,
+			&AChangeLevel::PreviousLevel
+		);
+
+		EnhancedInputComponent->BindAction(
+			PreviousLevelAction,
+			ETriggerEvent::Canceled,
+			this,
+			&AChangeLevel::PreviousLevel
+		);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("PreviousLevelAction is not set in ChangeLevel"));
 	}
 }
 
-void AChangeLevel::ChangeLevel()
+void AChangeLevel::NextLevel()
 {
 	if (!IsValid(LevelManager))
 	{
@@ -118,6 +146,32 @@ void AChangeLevel::ChangeLevel()
 		break;
 	case LevelSeed::GameOverLevel:
 		LevelManager->LoadTitleLevel();
+		break;
+	}
+}
+
+void AChangeLevel::PreviousLevel()
+{
+	if (!IsValid(LevelManager))
+	{
+		UE_LOG(LogTemp, Error, TEXT("LevelManager is not set in ChangeLevel"));
+		return;
+	}
+
+	switch (LevelName) {
+	case LevelSeed::None:
+		UE_LOG(LogTemp, Error, TEXT("LevelName is not set in ChangeLevel"));
+		break;
+	case LevelSeed::TitleLevel:
+		UE_LOG(LogTemp, Warning, TEXT("QUIT is Game"));
+		break;
+	case LevelSeed::MovieLevel:
+		break;
+	case LevelSeed::MainLevel:
+		break;
+	case LevelSeed::ClearLevel:
+		break;
+	case LevelSeed::GameOverLevel:
 		break;
 	}
 }

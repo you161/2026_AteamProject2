@@ -38,7 +38,8 @@ protected:
 
 private:
 	// レベル遷移入力
-	void ChangeLevel();
+	void NextLevel();
+	void PreviousLevel();
 
 	// LevelManager
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LevelManager", meta = (AllowPrivateAccess = "true"))
@@ -52,9 +53,13 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputMappingContext> InputMappingContext = nullptr;
 
-	// レベル遷移入力
+	// 次のレベル遷移入力
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInputAction> ChangeLevelAction;
+	TObjectPtr<UInputAction> NextLevelAction;
+	
+	// 前のレベル遷移入力
+	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> PreviousLevelAction;
 
 	TObjectPtr<ALevelManager> LevelManager = nullptr;
 };
