@@ -52,6 +52,18 @@ void AThrowableObject::OnPickedUp(AActor* Holder)
         return;
     }
 
+	if (!IsValid(ThrowableManager))
+	{
+		UE_LOG(LogTemp, Error, TEXT("ThrowableManager is null in AThrowableObject::OnPickedUp"));
+		return;
+	}
+
+	if (!IsValid(ThrowableData))
+	{
+		UE_LOG(LogTemp, Error, TEXT("ThrowableData is null in AThrowableObject::OnPickedUp"));
+		return;
+	}
+
 	if (CurrentState == EThrowableState::Held)
 	{
 		//スケールを調整する
@@ -132,6 +144,12 @@ void AThrowableObject::UpdateThrownMovement(float DeltaTime)
     {
         return;
     }
+
+	if (!IsValid(ThrowableData))
+	{
+		UE_LOG(LogTemp, Error, TEXT("ThrowableData is null in AThrowableObject::UpdateThrownMovement"));
+		return;
+	}
 
 	//指定方向に移動する
     const FVector Delta = CurrentDirection * ThrowableData->MoveSpeed * DeltaTime;
