@@ -1,6 +1,6 @@
 
 #include "GameManager/GameJudge.h"
-#include "HitPointBar.h"
+#include "Health/HitPointBar.h"
 #include "Level/LevelManager.h"
 
 AGameJudge::AGameJudge()
