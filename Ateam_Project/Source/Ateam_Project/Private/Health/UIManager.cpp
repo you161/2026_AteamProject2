@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UIManager.h"
-#include "HitPointBar.h"
+#include "Health/UIManager.h"
+#include "Health/HitPointBar.h"
 #include "Health/HealthManager.h"
 
 AUIManager::AUIManager()

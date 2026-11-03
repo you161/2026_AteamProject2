@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HitPointBar.h"
+#include "Health/HitPointBar.h"
 #include "Components/CanvasPanel.h"
 #include "Components/Image.h"
 
