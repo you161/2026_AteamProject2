@@ -80,17 +80,20 @@ void APlayerPawn::Move(float DeltaTime)
 	//入力をカメラの向き基準のワールド方向に変換
 	CurrentDirection = (CurrentCameraForward * MoveInput.Y + CurrentCameraRight * MoveInput.X).GetSafeNormal();
 
-	//プレイヤーの移動速度を計算する
-	int32 ObjectCount = ThrowableManager->GetCollectedCount();
-	float DecreaseRate = FMath::Clamp(1.0f - ObjectCount * PlayerData->SlowPerScale, PlayerData->MinSpeedRate, 1.0f);
+	const TArray<float>& Table = PlayerData->MoveSpeedTable;
 
-	//ダッシュ中は速度倍率を適用する
-	if (InputManager->GetIsDashing())
+	if (Table.Num() == 0)
 	{
-		DecreaseRate *= PlayerData->DashSpeedRate;
+		UE_LOG(LogTemp, Error, TEXT("PlayerAttackDamage is empty"));
+		return;
 	}
 
-	const FVector Delta = CurrentDirection * PlayerData->MoveSpeed * DecreaseRate * DeltaTime;
+	//集めた個数を取得して、移動速度を決定する
+	const int32 Index = FMath::Clamp(ThrowableManager->GetCollectedCount(), 0, Table.Num() - 1);
+	//ダッシュ中は速度倍率を適用する
+	float DecreaseRate = InputManager->GetIsDashing() ? PlayerData->DashSpeedRate : 1.0f;
+
+	const FVector Delta = CurrentDirection * Table[Index] * DecreaseRate * DeltaTime;
 
 	if (!Delta.IsNearlyZero())
 	{
