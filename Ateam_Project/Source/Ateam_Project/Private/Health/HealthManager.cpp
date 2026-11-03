@@ -1,9 +1,10 @@
 
 #include "Health/HealthManager.h"
-#include "HitPointBar.h"
-#include "UIManager.h"
+#include "Health/HitPointBar.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameManager/GameJudge.h"
+#include "Player/DamageAmountData.h"
+#include "Throwable/ThrowableManager.h"
 
 AHealthManager::AHealthManager()
 {
@@ -27,14 +28,50 @@ void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
 {
 	int32 Type = CurrentCharactorType;
 
-	if (DamageAmount[Type] <= 0)
+	float CurrentDamage = 0.0f;
+
+	if(!IsValid(DamageAmountData))
+	{
+		UE_LOG(LogTemp, Error, TEXT("DamageAmountData is null in AHealthManager::TakeDamage"));
+		return;
+	}
+
+	if (Type == CharactorType::Player)
+	{
+		CurrentDamage = DamageAmountData->EnemyAttackDamage;
+	}
+	else if(Type == CharactorType::Enemy)
+	{
+		if (!IsValid(ThrowableManager))
+		{
+			UE_LOG(LogTemp, Error, TEXT("ThrowableManager is null in AHealthManager::TakeDamage"));
+			return;
+		}
+
+		const TArray<float>& Table = DamageAmountData->PlayerAttackDamage;
+
+		if (Table.Num() == 0)
+		{
+			UE_LOG(LogTemp, Error, TEXT("PlayerAttackDamage is empty"));
+			return;
+		}
+
+		//投げた時の個数を取得して、ダメージ量を決定する
+		const int32 Index = FMath::Clamp(ThrowableManager->GetThrownCount(), 0, Table.Num() - 1);
+		CurrentDamage = Table[Index];
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("[TakeDamage] Target=%s Damage=%.1f"),
+		Type == CharactorType::Player ? TEXT("Player") : TEXT("Enemy"),
+		CurrentDamage);
+
+	if (CurrentDamage <= 0)
 	{
 		return;
 	}
 
-	CurrentHealth[Type] = FMath::Max(0, CurrentHealth[Type] - DamageAmount[Type]);
-
-	TotalDamage[Type] += DamageAmount[Type];
+	CurrentHealth[Type] = FMath::Max(0, CurrentHealth[Type] - CurrentDamage);
+	TotalDamage[Type] += CurrentDamage;
 
 	if (IsValid(HitPointBar[Type]))
 	{
@@ -44,8 +81,6 @@ void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
 	{
 		UE_LOG(LogTemp, Error, TEXT("HitPointBar is null in AHealthManager::TakeDamage"));
 	}
-
-	UE_LOG(LogTemp, Log, TEXT("Current HP: %d / %d"), CurrentHealth[Type], MaxHealth[Type]);
 }
 
 void AHealthManager::InitializeHealth(UHitPointBar* PlayerBar, UHitPointBar* EnemyBar)
@@ -97,7 +132,7 @@ void AHealthManager::OnHPBarEmptied(UHitPointBar* EmptiedBar)
 }
 
 //HP参照関数
-int32 AHealthManager::GetHealth(CharactorType CurrentCharactorType)const
+float AHealthManager::GetHealth(CharactorType CurrentCharactorType)const
 {
 	return CurrentHealth[static_cast<int32>(CurrentCharactorType)];
 }

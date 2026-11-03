@@ -3,6 +3,7 @@
 #include "Throwable/ThrowableObject.h"
 #include "Input/InputManager.h"
 #include "Input/InputReceiver.h"
+#include "Player/DamageAmountData.h"
 
 AThrowableManager::AThrowableManager()
 {
@@ -42,15 +43,22 @@ void AThrowableManager::PickUp(AThrowableObject* Target)
 		return;
 	}
 
-	if (CollectedCount >= MaxObjectCount)
+	if (!IsValid(DamageAmountData))
 	{
+		UE_LOG(LogTemp, Error, TEXT("DamageAmountData is null in AThrowableManager::PickUp"));
+		return;
+	}
+
+	if (CollectedCount >= DamageAmountData->PlayerAttackDamage.Num() - 1)
+	{
+		UE_LOG(LogTemp, Error, TEXT("CollectedCount exceeds PlayerAttackDamage array size"));
 		return;
 	}
 
 	if (!IsValid(HeldItem))
 	{
 		HeldItem = Target;
-		CollectedCount = 0;
+		CollectedCount++;
 		HeldItem->OnPickedUp(Player);
 	}
 	else
@@ -64,6 +72,7 @@ void AThrowableManager::PickUp(AThrowableObject* Target)
 //アイテムを投げる処理
 void AThrowableManager::Throw()
 {
+	ThrownCount = CollectedCount;
 	HeldItem->OnThrown(Player->GetActorForwardVector());
 	HeldItem = nullptr;
 	CollectedCount = 0;

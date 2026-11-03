@@ -7,6 +7,7 @@
 
 class AThrowableObject;
 class UInputManager;
+class UDamageAmountData;
 
 /**
  * 拾ったオブジェクトマネージャークラス
@@ -31,8 +32,11 @@ public:
 	//アイテムを拾った時の処理
 	void PickUp(AThrowableObject* Target);
 
-	//アイテムを投げた時の処理
+	//現在持っているアイテムを取得する関数
 	int32 GetCollectedCount() const { return CollectedCount; }
+
+	//投げた時の個数を取得する関数
+	int32 GetThrownCount() const { return ThrownCount; }
 
 private:
 
@@ -46,9 +50,9 @@ protected:
 	//プレイヤー
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager|Player")
 	TObjectPtr<AActor> Player = nullptr;
-	//拾ったオブジェクトの最大数
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager|MaxObjectCount")
-	int32 MaxObjectCount = 0;
+	//ダメージ量データを保持するデータアセット
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager|Damage")
+	TObjectPtr<UDamageAmountData> DamageAmountData = nullptr;
 
 private:
 	//現在持っているアイテム
@@ -61,4 +65,7 @@ private:
 
 	//回収したアイテム数
 	int32 CollectedCount = 0;
+
+	//最後に投げた時の個数
+	int32 ThrownCount = 0;
 };

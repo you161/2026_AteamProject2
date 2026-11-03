@@ -7,6 +7,8 @@
 
 class UHitPointBar;
 class AGameJudge;
+class UDamageAmountData;
+class AThrowableManager;
 
 enum CharactorType
 {
@@ -36,7 +38,7 @@ public:
 	//初期化処理
 	void InitializeHealth(UHitPointBar* PlayerBar, UHitPointBar* EnemyBar);
 	//HP参照関数
-	int32 GetHealth(CharactorType CurrentCharactorType)const;
+	float GetHealth(CharactorType CurrentCharactorType)const;
 
 private:
 
@@ -44,19 +46,25 @@ private:
 
 protected:
 	//最大HP
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP|0がPlayer,1がEnemy")
-	TArray<int32> MaxHealth = {0,0};
-	//受けるダメージ量
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HP|0がPlayer,1がEnemy")
-	TArray<int32> DamageAmount = {0,0};
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HealthManager|HP|0がPlayer,1がEnemy")
+	TArray<float> MaxHealth = {0,0};
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GameJudge")
+	//拾ったオブジェクトを管理するマネージャー
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|Damage")
+	TObjectPtr<UDamageAmountData> DamageAmountData = nullptr;
+
+	//ゲームの勝敗を判定するクラス
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HealthManager|GameJudge")
 	TObjectPtr<AGameJudge> GameJudge = nullptr;
+
+	//拾ったオブジェクトを管理するマネージャー
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HealthManager|Throwable")
+	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
 
 private:
 	//現在のHPを保存する変数
-	TArray<int32> CurrentHealth = {0,0};
-	TArray<int32> TotalDamage = { 0,0 };
+	TArray<float> CurrentHealth = {0,0};
+	TArray<float> TotalDamage = { 0,0 };
 	TArray<TObjectPtr<UHitPointBar>> HitPointBar = {nullptr,nullptr};
 
 	bool bIsGameFinished = false;
