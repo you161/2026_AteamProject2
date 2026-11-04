@@ -27,7 +27,7 @@ public:
 	void LoadGameOverLevel();
 private:
 	//レベル読み込み
-	void LoadLevel(TSoftObjectPtr<UWorld> NextLevel) const;
+	void LoadLevel(const TSoftObjectPtr<UWorld> NextLevel);
 protected:
 	//タイトルシーン
 	UPROPERTY(EditAnywhere, Category = "Level|Title")
@@ -44,4 +44,9 @@ protected:
 	//ゲームオーバーシーン
 	UPROPERTY(EditAnywhere, Category = "Level|GameOver")
 	TSoftObjectPtr<UWorld> GameOverLevel = nullptr;
+
+private:
+	//レベル読み込み中かどうか
+	bool bIsLoading = false;
+
 };

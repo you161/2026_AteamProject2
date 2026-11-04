@@ -10,6 +10,8 @@ ALevelManager::ALevelManager()
 void ALevelManager::BeginPlay()
 {
 	Super::BeginPlay();	
+
+	bIsLoading = false;
 }
 
 void ALevelManager::LoadTitleLevel()
@@ -67,7 +69,7 @@ void ALevelManager::LoadGameOverLevel()
 	LoadLevel(GameOverLevel);
 }
 
-void ALevelManager::LoadLevel(TSoftObjectPtr<UWorld> NextLevel)const
+void ALevelManager::LoadLevel(const TSoftObjectPtr<UWorld> NextLevel)
 {
 	if (!IsValid(GetWorld()))
 	{
@@ -80,5 +82,11 @@ void ALevelManager::LoadLevel(TSoftObjectPtr<UWorld> NextLevel)const
 		UE_LOG(LogTemp, Error, TEXT("NextLevel is null"));
 	}
 
+	if (bIsLoading)
+	{
+		return;
+	}
+
+	bIsLoading = true;
 	UGameplayStatics::OpenLevelBySoftObjectPtr(GetWorld(), NextLevel);
 }
