@@ -5,6 +5,7 @@
 #include "GameManager/GameJudge.h"
 #include "Player/DamageAmountData.h"
 #include "Throwable/ThrowableManager.h"
+#include "Engine/Engine.h"
 
 AHealthManager::AHealthManager()
 {
@@ -57,18 +58,26 @@ void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
 		}
 
 		//投げた時の個数を取得して、ダメージ量を決定する
-		const int32 Index = FMath::Clamp(ThrowableManager->GetThrownCount(), 0, Table.Num() - 1);
+		CollectedCount = ThrowableManager->GetThrownCount();
+		const int32 Index = FMath::Clamp(CollectedCount, 0, Table.Num() - 1);
 		CurrentDamage = Table[Index];
 	}
-
-	UE_LOG(LogTemp, Log, TEXT("[TakeDamage] Target=%s Damage=%.1f"),
-		Type == CharactorType::Player ? TEXT("Player") : TEXT("Enemy"),
-		CurrentDamage);
 
 	if (CurrentDamage <= 0)
 	{
 		return;
 	}
+
+#if !UE_BUILD_SHIPPING
+	if (bShowDebugDamage && GEngine && Type == CharactorType::Enemy)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			3.0f,
+			FColor::Red,
+			FString::Printf(TEXT("個数: %d  ダメージ: %.1f"), CollectedCount, CurrentDamage));
+	}
+#endif
 
 	CurrentHealth[Type] = FMath::Max(0, CurrentHealth[Type] - CurrentDamage);
 	TotalDamage[Type] += CurrentDamage;
