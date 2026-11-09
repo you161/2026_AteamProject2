@@ -5,6 +5,19 @@
 #include "Engine/DataAsset.h"
 #include "PlayerData.generated.h"
 
+/*
+* プレイヤーのデータを格納するための構造体
+*/
+USTRUCT(BlueprintType)
+struct FMoveSpeed
+{
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TArray<float> Values = {};
+};
+
 /**
  * プレイヤーのデータを格納するためのデータアセットクラス
  */
@@ -14,8 +27,8 @@ class ATEAM_PROJECT_API UPlayerData : public UDataAsset
 	GENERATED_BODY()
 public:
 	//プレイヤーの移動速度
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|移動速度")
-    TArray<float> MoveSpeedTable = {};
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TArray<FMoveSpeed> MoveSpeedTable = {};
 
 	//ダッシュ時の速度倍率
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|ダッシュ")

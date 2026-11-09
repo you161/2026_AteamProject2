@@ -8,6 +8,7 @@ class UInputManager;
 class UPlayerData;
 class UCapsuleComponent;
 class AThrowableManager;
+class APlayerLevelManager;
 
 /**
  * 入力の値を受け取り、プレイヤーの移動やジャンプの状態を管理するクラス
@@ -54,6 +55,9 @@ protected:
 	//拾ったオブジェクトを管理するマネージャー
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|Throwable")
 	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
+	//プレイヤーのレベルを管理するマネージャー
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|Level")
+	TObjectPtr<APlayerLevelManager> PlayerLevelManager = nullptr;
 	//プレイヤーの当たり判定を行うコリジョン
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
 	TObjectPtr<UCapsuleComponent> CapsuleCollision;

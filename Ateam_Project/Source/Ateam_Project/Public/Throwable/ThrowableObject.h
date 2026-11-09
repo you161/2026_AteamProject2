@@ -11,6 +11,7 @@ class UThrowableObjectData;
 class AThrowableManager;
 class AHealthManager;
 class APlayerPawn;
+class APlayerLevelManager;
 
 /**
  *投げることができるアイテム
@@ -73,6 +74,9 @@ protected:
 	//投げれるオブジェクトのデータ
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ThrowableObject|Data")
 	TObjectPtr<UThrowableObjectData> ThrowableData = nullptr;
+	//投げれるオブジェクトのデータ
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ThrowableObject|PlayerLevelManager")
+	TObjectPtr<APlayerLevelManager> PlayerLevelManager = nullptr;
 
 private:
 	//現在の状態を管理するステート

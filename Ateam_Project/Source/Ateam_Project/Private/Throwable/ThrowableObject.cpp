@@ -6,6 +6,7 @@
 #include "Player/PlayerPawn.h"
 #include "Enemy/EnemyActor.h"
 #include "Health/HealthManager.h"
+#include "Player/PlayerLevelManager.h"
 
 AThrowableObject::AThrowableObject()
 {
@@ -187,9 +188,11 @@ void AThrowableObject::OnOverlap(
     }
 
 	//投げられたオブジェクトが敵と重なった場合にダメージを与える処理を行う
-    if (CurrentState == EThrowableState::Thrown && Cast<AEnemyActor>(OtherActor) && IsValid(HealthManager))
+    if (CurrentState == EThrowableState::Thrown && Cast<AEnemyActor>(OtherActor) 
+        && IsValid(HealthManager) && IsValid(PlayerLevelManager))
     {
         HealthManager->TakeDamage(CharactorType::Enemy);
+        PlayerLevelManager->AddExp();
         Destroy();
         return;
     }

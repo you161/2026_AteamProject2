@@ -4,6 +4,7 @@
 #include "Player/PlayerData.h"
 #include "Components/CapsuleComponent.h"
 #include "Throwable/ThrowableManager.h"
+#include "Player/PlayerLevelManager.h"
 
 APlayerPawn::APlayerPawn()
 {
@@ -20,20 +21,16 @@ void APlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (!IsValid(PlayerData))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerData is not set in PlayerPawn."));
-	}
-
-	if (!IsValid(Camera))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Camera is not set in PlayerPawn."));
-	}
-
 	//BeginPlay時点ですでにPossessされている場合に備える
 	InitializeInputManager();
 
 	CurrentDirection = FVector::ZeroVector;
+
+	if (!IsValid(InputManager))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("InputManager is not set in PlayerPawn."));
+		return;
+	}
 
 	if (IsValid(Camera))
 	{
@@ -45,6 +42,24 @@ void APlayerPawn::BeginPlay()
 		UE_LOG(LogTemp,Error,TEXT("Camera is not set in PlayerPawn."));
 	}
 
+	if (!IsValid(PlayerData))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerData is not set in PlayerPawn."));
+		return;
+	}
+
+	if (!IsValid(ThrowableManager))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ThrowableManager is not set in PlayerPawn."));
+		return;
+	}
+
+	if (!IsValid(PlayerLevelManager))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerLevelManager is not set in PlayerPawn."));
+		return;
+	}
+
 	bisMoving = false;
 	bhasObject = false;
 }
@@ -54,7 +69,11 @@ void APlayerPawn::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	//Possess前や必要な設定がない間は何もしない
-	if (!IsValid(InputManager) || !IsValid(PlayerData) || !IsValid(Camera))
+	if (!IsValid(InputManager)	   ||
+		!IsValid(PlayerData)	   ||
+		!IsValid(Camera)		   ||
+		!IsValid(ThrowableManager) || 
+		!IsValid(PlayerLevelManager))
 	{
 		return;
 	}
@@ -68,6 +87,12 @@ void APlayerPawn::Move(float DeltaTime)
 {
 	const FVector2D MoveInput = InputManager->GetMoveInput();
 
+	if (!IsValid(Camera))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Camera is not set in PlayerPawn."));
+		return;
+	}
+
 	CurrentCameraForward = Camera->GetActorForwardVector();
 	CurrentCameraRight = Camera->GetActorRightVector();
 
@@ -79,25 +104,47 @@ void APlayerPawn::Move(float DeltaTime)
 
 	//入力をカメラの向き基準のワールド方向に変換
 	CurrentDirection = (CurrentCameraForward * MoveInput.Y + CurrentCameraRight * MoveInput.X).GetSafeNormal();
-
-	const TArray<float>& Table = PlayerData->MoveSpeedTable;
+	//移動速度のデータを取得する
+	const TArray<FMoveSpeed>& Table = PlayerData->MoveSpeedTable;
 
 	if (Table.Num() == 0)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerAttackDamage is empty"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerData->MoveSpeedTable is empty"));
+		return;
+	}
+
+	//現在のレベルを取得する
+	const int CurrentLevel = FMath::Clamp(PlayerLevelManager->GetLevel(), 0, Table.Num() - 1);
+	//現在のレベルに対応する移動速度の行を取得する
+	const TArray<float>& Row = Table[CurrentLevel].Values;
+
+	if (Row.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MoveSpeedTable[%d] is empty"), CurrentLevel);
 		return;
 	}
 
 	//集めた個数を取得して、移動速度を決定する
-	const int32 Index = FMath::Clamp(ThrowableManager->GetCollectedCount(), 0, Table.Num() - 1);
+	const int32 Index = FMath::Clamp(ThrowableManager->GetCollectedCount(), 0, Row.Num() - 1);
 	//ダッシュ中は速度倍率を適用する
 	float DecreaseRate = InputManager->GetIsDashing() ? PlayerData->DashSpeedRate : 1.0f;
 
-	const FVector Delta = CurrentDirection * Table[Index] * DecreaseRate * DeltaTime;
+	const FVector Delta = CurrentDirection * Row[Index] * DecreaseRate * DeltaTime;
 
 	if (!Delta.IsNearlyZero())
 	{
-		AddActorWorldOffset(Delta, true);
+		FHitResult Hit;
+		AddActorWorldOffset(Delta, true, &Hit);
+
+		//衝突が発生した場合、スライド移動を行う
+		if (Hit.IsValidBlockingHit())
+		{
+			//スライド移動の計算
+			FVector Slide = FVector::VectorPlaneProject(Delta, Hit.Normal) * (1.0f - Hit.Time);
+			Slide.Z = 0.0f;
+			AddActorWorldOffset(Slide, true);
+		}
+
 		bisMoving = true;
 	}
 	else
