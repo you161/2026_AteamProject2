@@ -5,6 +5,7 @@
 #include "GameManager/GameJudge.h"
 #include "Player/PlayerDamageData.h"
 #include "Enemy/EnemyDamageData.h"
+#include "Health/HealthData.h"
 #include "Throwable/ThrowableManager.h"
 #include "Engine/Engine.h"
 
@@ -23,6 +24,31 @@ void AHealthManager::BeginPlay()
 	}
 
 	bIsGameFinished = false;
+
+	if (!IsValid(PlayerDamageData))
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerDamageData is null in AHealthManager::TakeDamage"));
+	}
+
+	if (!IsValid(EnemyDamageData))
+	{
+		UE_LOG(LogTemp, Error, TEXT("EnemyDamageData is null in AHealthManager::TakeDamage"));
+	}
+
+	if (!IsValid(HealthData))
+	{
+		UE_LOG(LogTemp, Error, TEXT("HealthData is null in AHealthManager::TakeDamage"));
+	}
+	else
+	{
+		MaxHealth[CharactorType::Player] = HealthData->PlayerMaxHealth;
+		MaxHealth[CharactorType::Enemy] = HealthData->EnemyMaxHealth;
+	}
+
+	if (!IsValid(ThrowableManager))
+	{
+		UE_LOG(LogTemp, Error, TEXT("ThrowableManager is null in AHealthManager::TakeDamage"));
+	}
 }
 
 //ダメージ処理
@@ -32,15 +58,8 @@ void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
 
 	float CurrentDamage = 0.0f;
 
-	if(!IsValid(PlayerDamageData))
+	if(!IsValid(PlayerDamageData)|| !IsValid(EnemyDamageData)|| !IsValid(ThrowableManager))
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerDamageData is null in AHealthManager::TakeDamage"));
-		return;
-	}
-
-	if (!IsValid(EnemyDamageData))
-	{
-		UE_LOG(LogTemp, Error, TEXT("EnemyDamageData is null in AHealthManager::TakeDamage"));
 		return;
 	}
 
@@ -50,12 +69,6 @@ void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
 	}
 	else if(Type == CharactorType::Enemy)
 	{
-		if (!IsValid(ThrowableManager))
-		{
-			UE_LOG(LogTemp, Error, TEXT("ThrowableManager is null in AHealthManager::TakeDamage"));
-			return;
-		}
-
 		const TArray<float>& Table = PlayerDamageData->PlayerAttackDamage;
 
 		if (Table.Num() == 0)
