@@ -3,7 +3,8 @@
 #include "Health/HitPointBar.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameManager/GameJudge.h"
-#include "Player/DamageAmountData.h"
+#include "Player/PlayerDamageData.h"
+#include "Enemy/EnemyDamageData.h"
 #include "Throwable/ThrowableManager.h"
 #include "Engine/Engine.h"
 
@@ -31,15 +32,21 @@ void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
 
 	float CurrentDamage = 0.0f;
 
-	if(!IsValid(DamageAmountData))
+	if(!IsValid(PlayerDamageData))
 	{
-		UE_LOG(LogTemp, Error, TEXT("DamageAmountData is null in AHealthManager::TakeDamage"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerDamageData is null in AHealthManager::TakeDamage"));
+		return;
+	}
+
+	if (!IsValid(EnemyDamageData))
+	{
+		UE_LOG(LogTemp, Error, TEXT("EnemyDamageData is null in AHealthManager::TakeDamage"));
 		return;
 	}
 
 	if (Type == CharactorType::Player)
 	{
-		CurrentDamage = DamageAmountData->EnemyAttackDamage;
+		CurrentDamage = EnemyDamageData->EnemyAttackDamage;
 	}
 	else if(Type == CharactorType::Enemy)
 	{
@@ -49,7 +56,7 @@ void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
 			return;
 		}
 
-		const TArray<float>& Table = DamageAmountData->PlayerAttackDamage;
+		const TArray<float>& Table = PlayerDamageData->PlayerAttackDamage;
 
 		if (Table.Num() == 0)
 		{
@@ -65,6 +72,7 @@ void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
 
 	if (CurrentDamage <= 0)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("CurrentDamage is zero or negative in AHealthManager::TakeDamage"));
 		return;
 	}
 

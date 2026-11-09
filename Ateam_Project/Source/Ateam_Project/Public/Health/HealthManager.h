@@ -7,7 +7,8 @@
 
 class UHitPointBar;
 class AGameJudge;
-class UDamageAmountData;
+class UPlayerDamageData;
+class UEnemyDamageData;
 class AThrowableManager;
 
 enum CharactorType
@@ -50,8 +51,12 @@ protected:
 	TArray<float> MaxHealth = {0,0};
 
 	//拾ったオブジェクトを管理するマネージャー
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|Damage")
-	TObjectPtr<UDamageAmountData> DamageAmountData = nullptr;
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|PlayerDamage")
+	TObjectPtr<UPlayerDamageData> PlayerDamageData = nullptr;
+
+	//拾ったオブジェクトを管理するマネージャー
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|EnemyDamage")
+	TObjectPtr<UEnemyDamageData> EnemyDamageData = nullptr;
 
 	//ゲームの勝敗を判定するクラス
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HealthManager|GameJudge")

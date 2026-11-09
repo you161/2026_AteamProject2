@@ -3,7 +3,7 @@
 #include "Throwable/ThrowableObject.h"
 #include "Input/InputManager.h"
 #include "Input/InputReceiver.h"
-#include "Player/DamageAmountData.h"
+#include "Player/PlayerDamageData.h"
 
 AThrowableManager::AThrowableManager()
 {
@@ -43,13 +43,13 @@ void AThrowableManager::PickUp(AThrowableObject* Target)
 		return;
 	}
 
-	if (!IsValid(DamageAmountData))
+	if (!IsValid(PlayerDamageData))
 	{
 		UE_LOG(LogTemp, Error, TEXT("DamageAmountData is null in AThrowableManager::PickUp"));
 		return;
 	}
 
-	if (CollectedCount >= DamageAmountData->PlayerAttackDamage.Num() - 1)
+	if (CollectedCount >= PlayerDamageData->PlayerAttackDamage.Num() - 1)
 	{
 		UE_LOG(LogTemp, Error, TEXT("CollectedCount exceeds PlayerAttackDamage array size"));
 		return;

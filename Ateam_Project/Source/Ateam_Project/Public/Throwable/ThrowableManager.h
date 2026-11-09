@@ -7,7 +7,7 @@
 
 class AThrowableObject;
 class UInputManager;
-class UDamageAmountData;
+class UPlayerDamageData;
 
 /**
  * 拾ったオブジェクトマネージャークラス
@@ -52,7 +52,7 @@ protected:
 	TObjectPtr<AActor> Player = nullptr;
 	//ダメージ量データを保持するデータアセット
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableManager|Damage")
-	TObjectPtr<UDamageAmountData> DamageAmountData = nullptr;
+	TObjectPtr<UPlayerDamageData> PlayerDamageData = nullptr;
 
 private:
 	//現在持っているアイテム
