@@ -146,16 +146,16 @@ void AFallActor::SpawnZoneActor()
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
 	QueryParams.AddIgnoredActor(PlayerPawn);
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_Visibility, QueryParams))
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_WorldStatic, QueryParams))
 	{
 		StartTrace.Z = HitResult.ImpactPoint.Z;
-		ZoneActor = GetWorld()->SpawnActor<AActor>(zone, FTransform(StartTrace));
 	}
 	else
 	{
 		StartTrace.Z = 0.0;
-		ZoneActor = GetWorld()->SpawnActor<AActor>(zone, FTransform(StartTrace));
 	}
+	ZoneActor = GetWorld()->SpawnActor<AActor>(zone, FTransform(StartTrace));
+
 	if (ZoneActor != nullptr)
 	{
 		SetZoneMesh();
