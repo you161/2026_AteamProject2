@@ -229,9 +229,6 @@ void AFallActor::OnOverlapBegin(
 	{
 		if (OverlappedComp == ZoneCollision && OtherActor->IsA(EnemyData->PlayerPawn))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Hit Actor Name: %s / Class: %s"),
-				*OtherActor->GetName(),
-				*OtherActor->GetClass()->GetName());
 			bIsHitPlayer = true;
 		}
 		else if (OverlappedComp == BoxCollision && OtherComp == ZoneMesh)
@@ -246,8 +243,6 @@ void AFallActor::OnOverlapBegin(
 				{
 					UE_LOG(LogTemp, Error, TEXT("HealthManager is null in AFallActor::OnOverlapBegin"));
 				}
-
-				UE_LOG(LogTemp, Warning, TEXT("It hit the player!"));
 			}
 			ZoneActor->Destroy();
 			Destroy();
