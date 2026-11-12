@@ -30,7 +30,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	//アイテムを拾った時の処理
-	void PickUp(AThrowableObject* Target);
+	bool PickUp(AThrowableObject* Target);
 
 	//現在持っているアイテムを取得する関数
 	int32 GetCollectedCount() const { return CollectedCount; }

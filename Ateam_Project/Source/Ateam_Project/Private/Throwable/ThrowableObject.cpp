@@ -179,10 +179,12 @@ void AThrowableObject::OnOverlap(
 		const APlayerPawn* OtherPlayer = Cast<APlayerPawn>(OtherActor);
         const AThrowableObject* OtherItem = Cast<AThrowableObject>(OtherActor);
 
-        if (OtherPlayer || OtherItem && OtherItem->IsHeld())
+        if (OtherPlayer || (OtherItem && OtherItem->IsHeld()))
         {
-            bIsCollected = true;
-            ThrowableManager->PickUp(this);
+            if (ThrowableManager->PickUp(this))
+            {
+                bIsCollected = true;
+            }
             return;
         }
     }

@@ -36,23 +36,23 @@ void AThrowableManager::Tick(float DeltaTime)
 }
 
 //現在持っているアイテムを設定する
-void AThrowableManager::PickUp(AThrowableObject* Target)
+bool AThrowableManager::PickUp(AThrowableObject* Target)
 {
-	if (!IsValid(Target)) 
+	if (!IsValid(Target))
 	{
-		return;
+		return false;
 	}
 
 	if (!IsValid(PlayerDamageData))
 	{
 		UE_LOG(LogTemp, Error, TEXT("DamageAmountData is null in AThrowableManager::PickUp"));
-		return;
+		return false;
 	}
 
 	if (CollectedCount >= PlayerDamageData->PlayerAttackDamage.Num() - 1)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CollectedCount exceeds PlayerAttackDamage array size"));
-		return;
+		//上限なので拾わない
+		return false;
 	}
 
 	if (!IsValid(HeldItem))
@@ -67,6 +67,7 @@ void AThrowableManager::PickUp(AThrowableObject* Target)
 		HeldItem->OnPickedUp(Player);
 		Target->Destroy();
 	}
+	return true;
 }
 
 //アイテムを投げる処理
