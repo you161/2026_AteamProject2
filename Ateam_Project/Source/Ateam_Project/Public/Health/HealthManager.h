@@ -67,9 +67,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HealthManager|Throwable")
 	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "Debug")
-	bool bShowDebugDamage = true;
-
 private:
 	//現在のHPを保存する変数
 	TArray<float> CurrentHealth = {0,0};

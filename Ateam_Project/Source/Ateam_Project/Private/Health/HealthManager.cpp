@@ -89,17 +89,6 @@ void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
 		return;
 	}
 
-#if !UE_BUILD_SHIPPING
-	if (bShowDebugDamage && GEngine && Type == CharactorType::Enemy)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			3.0f,
-			FColor::Red,
-			FString::Printf(TEXT("個数: %d  ダメージ: %.1f"), CollectedCount, CurrentDamage));
-	}
-#endif
-
 	CurrentHealth[Type] = FMath::Max(0, CurrentHealth[Type] - CurrentDamage);
 	TotalDamage[Type] += CurrentDamage;
 
