@@ -9,6 +9,7 @@ class UPlayerData;
 class UCapsuleComponent;
 class AThrowableManager;
 class APlayerLevelManager;
+class AStaminaManager;
 
 /**
  * 入力の値を受け取り、プレイヤーの移動やジャンプの状態を管理するクラス
@@ -27,7 +28,6 @@ public:
 	bool GetIsMoving() const { return bisMoving; }
 
 protected:
-
 	virtual void BeginPlay() override;
 
 	//コントローラーがPossessしたときに呼ばれる
@@ -36,7 +36,6 @@ protected:
 	virtual void UnPossessed() override;
 
 private:
-
 	//InputManagerを初期化する関数
 	void InitializeInputManager();
 	//移動処理を行う関数
@@ -45,10 +44,12 @@ private:
 	void Rotate(float DeltaTime);
 
 protected:
-
 	//プレイヤーのデータを格納するデータアセット
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|Data")
 	TObjectPtr<UPlayerData> PlayerData = nullptr;
+	//スタミナを制御するアクター
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|Stamina")
+	TObjectPtr<AStaminaManager> StaminaManager = nullptr;
 	//カメラを制御するアクター
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|Camera")
 	TObjectPtr<AActor> Camera = nullptr;

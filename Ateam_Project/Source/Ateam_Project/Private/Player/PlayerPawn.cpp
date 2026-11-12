@@ -5,6 +5,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Throwable/ThrowableManager.h"
 #include "Player/PlayerLevelManager.h"
+#include "Player/StaminaManager.h"
 
 APlayerPawn::APlayerPawn()
 {
@@ -60,6 +61,12 @@ void APlayerPawn::BeginPlay()
 		return;
 	}
 
+	if (!IsValid(StaminaManager))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("StaminaManager is not set in PlayerPawn."));
+		return;
+	}
+
 	bisMoving = false;
 	bhasObject = false;
 }
@@ -73,7 +80,8 @@ void APlayerPawn::Tick(float DeltaTime)
 		!IsValid(PlayerData)	   ||
 		!IsValid(Camera)		   ||
 		!IsValid(ThrowableManager) || 
-		!IsValid(PlayerLevelManager))
+		!IsValid(PlayerLevelManager) ||
+		!IsValid(StaminaManager))
 	{
 		return;
 	}
@@ -127,9 +135,14 @@ void APlayerPawn::Move(float DeltaTime)
 	//集めた個数を取得して、移動速度を決定する
 	const int32 Index = FMath::Clamp(ThrowableManager->GetCollectedCount(), 0, Row.Num() - 1);
 	//ダッシュ中は速度倍率を適用する
-	float DecreaseRate = InputManager->GetIsDashing() ? PlayerData->DashSpeedRate : 1.0f;
+	const bool bIsDashing = InputManager->GetIsDashing() &&
+							!CurrentDirection.IsNearlyZero() && 
+							StaminaManager->GetCanSprint();
 
-	const FVector Delta = CurrentDirection * Row[Index] * DecreaseRate * DeltaTime;
+	StaminaManager->SetIsSprinting(bIsDashing);
+
+	const float DashRate = bIsDashing ? PlayerData->DashSpeedRate : 1.0f;
+	const FVector Delta = CurrentDirection * Row[Index] * DashRate * DeltaTime;
 
 	if (!Delta.IsNearlyZero())
 	{
