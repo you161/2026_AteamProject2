@@ -4,6 +4,8 @@
 #include "Health/UIManager.h"
 #include "Health/HitPointBar.h"
 #include "Health/HealthManager.h"
+#include "UI/StaminaWidget.h"
+#include "Player/StaminaManager.h"
 
 AUIManager::AUIManager()
 {
@@ -31,7 +33,28 @@ void AUIManager::BeginPlay()
 		}
 	}
 
-	HealthManager->InitializeHealth(PlayerHPBar, EnemyHPBar);
+	if(IsValid(HealthManager))
+	{
+		HealthManager->InitializeHealth(PlayerHPBar, EnemyHPBar);
+	}
+
+	if (StaminaWidgetClass)
+	{
+		StaminaWidget = CreateWidget<UStaminaWidget>(GetWorld(), StaminaWidgetClass);
+		if (IsValid(StaminaWidget) && IsValid(StaminaManager))
+		{
+			StaminaWidget->AddToViewport();
+			StaminaWidget->SetStaminaManager(StaminaManager);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("StaminaWidget or StaminaManager is not valid in UIManager."));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("StaminaWidgetClass is not set in UIManager."));
+	}
 }
 
 void AUIManager::Tick(float DeltaTime)

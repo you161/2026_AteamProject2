@@ -8,6 +8,8 @@
 
 class UHitPointBar;
 class AHealthManager;
+class UStaminaWidget;
+class AStaminaManager;
 
 UCLASS()
 class ATEAM_PROJECT_API AUIManager : public AActor
@@ -38,6 +40,15 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HealthManager")
 	TObjectPtr<AHealthManager> HealthManager = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UStaminaWidget> StaminaWidgetClass = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UStaminaWidget> StaminaWidget = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "StaminaManager")
+	TObjectPtr<AStaminaManager> StaminaManager = nullptr;
 
 public:
 
