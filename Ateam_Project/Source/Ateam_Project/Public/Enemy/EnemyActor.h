@@ -41,7 +41,9 @@ protected:
 		const FHitResult& SweepResult);
 
 private:
-	TObjectPtr<UBoxComponent> BoxCollision = nullptr;
+	TObjectPtr<UBoxComponent> HeadCollision = nullptr;
+	TObjectPtr<UBoxComponent> BodyCollision = nullptr;
+	TObjectPtr<UBoxComponent> LegCollision = nullptr;
 	float RcountTime = 0.0f;
 	float HcountTime = 0.0f;
 	bool bIsConfigured = false;

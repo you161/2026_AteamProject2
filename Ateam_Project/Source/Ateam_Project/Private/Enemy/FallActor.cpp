@@ -146,16 +146,16 @@ void AFallActor::SpawnZoneActor()
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
 	QueryParams.AddIgnoredActor(PlayerPawn);
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_Visibility, QueryParams))
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_WorldStatic, QueryParams))
 	{
 		StartTrace.Z = HitResult.ImpactPoint.Z;
-		ZoneActor = GetWorld()->SpawnActor<AActor>(zone, FTransform(StartTrace));
 	}
 	else
 	{
 		StartTrace.Z = 0.0;
-		ZoneActor = GetWorld()->SpawnActor<AActor>(zone, FTransform(StartTrace));
 	}
+	ZoneActor = GetWorld()->SpawnActor<AActor>(zone, FTransform(StartTrace));
+
 	if (ZoneActor != nullptr)
 	{
 		SetZoneMesh();
@@ -229,9 +229,6 @@ void AFallActor::OnOverlapBegin(
 	{
 		if (OverlappedComp == ZoneCollision && OtherActor->IsA(EnemyData->PlayerPawn))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Hit Actor Name: %s / Class: %s"),
-				*OtherActor->GetName(),
-				*OtherActor->GetClass()->GetName());
 			bIsHitPlayer = true;
 		}
 		else if (OverlappedComp == BoxCollision && OtherComp == ZoneMesh)
@@ -246,8 +243,6 @@ void AFallActor::OnOverlapBegin(
 				{
 					UE_LOG(LogTemp, Error, TEXT("HealthManager is null in AFallActor::OnOverlapBegin"));
 				}
-
-				UE_LOG(LogTemp, Warning, TEXT("It hit the player!"));
 			}
 			ZoneActor->Destroy();
 			Destroy();

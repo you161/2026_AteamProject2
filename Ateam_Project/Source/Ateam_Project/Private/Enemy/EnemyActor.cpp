@@ -58,14 +58,51 @@ void AEnemyActor::SetEnemyData()
 
 void AEnemyActor::SetBoxCollision()
 {
-	BoxCollision = FindComponentByClass<UBoxComponent>();
-	if (BoxCollision != nullptr)
+	TArray<UBoxComponent*> BoxComp;
+	GetComponents<UBoxComponent>(BoxComp);
+	for (UBoxComponent* Comp : BoxComp)
 	{
-		BoxCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
+		if (Comp && Comp->ComponentHasTag(FName("Head")))
+		{
+			HeadCollision = Comp;
+		}
+		if (Comp && Comp->ComponentHasTag(FName("Body")))
+		{
+			BodyCollision = Comp;
+		}
+		if (Comp && Comp->ComponentHasTag(FName("Leg")))
+		{
+			LegCollision = Comp;
+		}
+	}
+
+	if (IsValid(HeadCollision))
+	{
+		HeadCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("BoxCollision is not set in EnemyActor"));
+		UE_LOG(LogTemp, Warning, TEXT("HeadCollision is not set in EnemyActor"));
+		bIsConfigured = false;
+	}
+
+	if (IsValid(BodyCollision))
+	{
+		BodyCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BodyCollision is not set in EnemyActor"));
+		bIsConfigured = false;
+	}
+
+	if (IsValid(LegCollision))
+	{
+		LegCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LegCollision is not set in EnemyActor"));
 		bIsConfigured = false;
 	}
 }
@@ -112,7 +149,22 @@ void AEnemyActor::OnOverlapBegin(
 {
 	if (OtherActor && OtherActor != this)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Overlap was called by EnemyActor."));
+		if (OverlappedComp == HeadCollision)
+		{
+			// 頭に当たった時の処理
 
+		}
+
+		if (OverlappedComp == BodyCollision)
+		{
+			// 体に当たった時の処理
+
+		}
+
+		if (OverlappedComp == LegCollision)
+		{
+			// 足に当たった時の処理
+
+		}
 	}
 }

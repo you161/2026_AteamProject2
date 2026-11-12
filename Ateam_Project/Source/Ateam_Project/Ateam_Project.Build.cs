@@ -17,8 +17,9 @@ public class Ateam_Project : ModuleRules
 			"EnhancedInput",
 			"UMG",
 			"Slate",
-			"SlateCore" 
-		}
+			"SlateCore",
+            "Niagara"
+        }
 		);
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
