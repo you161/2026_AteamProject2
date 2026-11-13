@@ -43,7 +43,7 @@ void AInputReceiver::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	//Enhanced Input Systemの設定
+	//EnhancedInputSystemの設定
 	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
 
 	if (!IsValid(EnhancedInputComponent))
@@ -52,6 +52,13 @@ void AInputReceiver::SetupInputComponent()
 		return;
 	}
 
+	if (!IsValid(InputManager))
+	{
+		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in SetupInputComponent."));
+		return;
+	}
+
+	//移動アクション
 	if (IsValid(MoveAction))
 	{
 		EnhancedInputComponent->BindAction(
@@ -80,27 +87,28 @@ void AInputReceiver::SetupInputComponent()
 		UE_LOG(LogTemp, Error, TEXT("MoveAction is not set in InputReceiver."));
 	}
 
-	if (IsValid(LookAction))
+	//カメラマウス操作アクション
+	if (IsValid(LookMouseAction))
 	{
 		EnhancedInputComponent->BindAction(
-			LookAction,
+			LookMouseAction,
 			ETriggerEvent::Triggered,
 			this,
-			&AInputReceiver::Look
+			&AInputReceiver::LookMouse
 		);
 
 		EnhancedInputComponent->BindAction(
-			LookAction,
+			LookMouseAction,
 			ETriggerEvent::Completed,
 			this,
-			&AInputReceiver::Look
+			&AInputReceiver::LookMouse
 		);
 
 		EnhancedInputComponent->BindAction(
-			LookAction,
+			LookMouseAction,
 			ETriggerEvent::Canceled,
 			this,
-			&AInputReceiver::Look
+			&AInputReceiver::LookMouse
 		);
 	}
 	else 
@@ -108,6 +116,34 @@ void AInputReceiver::SetupInputComponent()
 		UE_LOG(LogTemp, Error, TEXT("LookAction is not set in InputReceiver."));
 	}
 
+	//カメラコントローラーアクション
+	if (IsValid(LookGamepadAction))
+	{
+		EnhancedInputComponent->BindAction(
+			LookGamepadAction,
+			ETriggerEvent::Triggered,
+			this,
+			&AInputReceiver::LookGamepad
+		);
+		EnhancedInputComponent->BindAction(
+			LookGamepadAction,
+			ETriggerEvent::Completed,
+			this,
+			&AInputReceiver::LookGamepad
+		);
+		EnhancedInputComponent->BindAction(
+			LookGamepadAction,
+			ETriggerEvent::Canceled,
+			this,
+			&AInputReceiver::LookGamepad
+		);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("LookGamepadAction is not set in InputReceiver."));
+	}
+
+	//インタラクトアクション
 	if (IsValid(InteractAction))
 	{
 		EnhancedInputComponent->BindAction(
@@ -122,6 +158,7 @@ void AInputReceiver::SetupInputComponent()
 		UE_LOG(LogTemp, Error, TEXT("InteractAction is not set in InputReceiver."));
 	}
 
+	//ダッシュアクション
 	if (IsValid(DashAction))
 	{
 		EnhancedInputComponent->BindAction(
@@ -151,63 +188,39 @@ void AInputReceiver::SetupInputComponent()
 	}
 }
 
-//入力をInputManagerに渡す関数群
+//入力をInputManagerに渡す関数
 void AInputReceiver::Move(const FInputActionValue& Value)
 {
-	if (!IsValid(InputManager))
-	{
-		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in Move function."));
-		return;
-	}
-
 	InputManager->SetMoveInput(Value.Get<FVector2D>());
 }
 
-//マウス入力をInputManagerに渡す関数群
-void AInputReceiver::Look(const FInputActionValue& Value)
+//マウス入力をInputManagerに渡す関数
+void AInputReceiver::LookMouse(const FInputActionValue& Value)
 {
-	if (!IsValid(InputManager))
-	{
-		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in Look function."));
-		return;
-	}
-
 	InputManager->SetMouseInput(Value.Get<FVector2D>());
 }
 
-//インタラクション入力をInputManagerに渡す関数群
+//コントローラー入力をInputManagerに渡す関数
+void AInputReceiver::LookGamepad(const FInputActionValue& Value)
+{
+	InputManager->SetGamepadLookInput(Value.Get<FVector2D>());
+}
+
+//インタラクション入力をInputManagerに渡す関数
 void AInputReceiver::Interact()
 {
-	if (!IsValid(InputManager))
-	{
-		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in Interact function."));
-		return;
-	}
-
 	InputManager->SetIsInteracting(true);
 }
 
-//ダッシュ入力をInputManagerに渡す関数群
+//ダッシュ入力をInputManagerに渡す関数
 void AInputReceiver::Dash()
 {
-	if (!IsValid(InputManager))
-	{
-		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in Dash function."));
-		return;
-	}
-
 	InputManager->SetIsDashing(true);
 }
 
 //ダッシュ入力が終了したときに呼ばれる関数
 void AInputReceiver::StopDash()
 {
-	if (!IsValid(InputManager))
-	{
-		UE_LOG(LogTemp, Error, TEXT("InputManager is not valid in StopDash function."));
-		return;
-	}
-
 	InputManager->SetIsDashing(false);
 }
 

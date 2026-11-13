@@ -27,6 +27,16 @@ FVector2D UInputManager::GetMouseInput() const
 	return MouseInput;
 }
 
+void UInputManager::SetGamepadLookInput(const FVector2D& Input)
+{
+	GamepadLookInput = Input;
+}
+
+FVector2D UInputManager::GetGamepadLookInput() const
+{
+	return GamepadLookInput;
+}
+
 //インタラクション中かどうかを設定する関数
 void UInputManager::SetIsInteracting(bool bInteracting)
 {

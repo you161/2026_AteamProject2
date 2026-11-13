@@ -31,7 +31,9 @@ private:
 	//移動入力を設定する関数
 	void Move(const FInputActionValue& Value);
 	//マウス操作の値を設定する関数
-	void Look(const FInputActionValue& Value);
+	void LookMouse(const FInputActionValue& Value);
+	//コントローラーの視点操作の値を設定する関数
+	void LookGamepad(const FInputActionValue& Value);
 	//インタラクトアクションを設定する関数
 	void Interact();
 	//ダッシュアクションを設定する関数
@@ -50,7 +52,11 @@ private:
 
 	//マウス入力
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInputAction> LookAction = nullptr;
+	TObjectPtr<UInputAction> LookMouseAction = nullptr;
+
+	//コントローラー視点入力
+	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> LookGamepadAction = nullptr;
 
 	//インタラクション入力
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))

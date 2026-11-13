@@ -29,7 +29,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	//カメラの回転を処理する関数
-	void RotateCamera();
+	void RotateCamera(float DeltaTime);
 
 protected:
 	//プレイヤーのデータを格納するデータアセット
