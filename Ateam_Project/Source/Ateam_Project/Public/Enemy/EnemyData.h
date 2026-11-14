@@ -9,6 +9,46 @@
 /**
  *   敵のデータアセットクラス
  */
+
+UENUM(BlueprintType)
+enum class EAttackSeed : uint8
+{
+	RandomAttack = 0,
+	HomingAttack
+};
+
+USTRUCT(BlueprintType)
+struct FAttackState
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "時間"))
+	float AttackTime = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃の種類"))
+	EAttackSeed AttackSeed = EAttackSeed::RandomAttack;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃アクタのサイズ"))
+	float ActorSize = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃範囲のサイズ"))
+	float ZoneSize = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "移動速度"))
+	float MoveSpeed = 1000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "回転速度"))
+	float RotationSpeed = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "初めに回転させるランダム範囲  X = Min Y = Max"))
+	FVector2D PitchYawRange = FVector2D::Zero();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,
+		meta = (DisplayName = "生成する範囲  X = MinX Y = MinY Z = MaxX W = MaxY"),
+		meta = (EditCondition = "AttackSeed == EAttackSeed::RandomAttack"))
+	FVector4 SpawnArea = FVector4::Zero();
+};
+
 UCLASS(BlueprintType)
 class ATEAM_PROJECT_API UEnemyData : public UDataAsset
 {
@@ -16,83 +56,7 @@ class ATEAM_PROJECT_API UEnemyData : public UDataAsset
 	
 public:
 	UEnemyData();
-	bool IsConfigured() const;
 
-	//=======================================================================
-
-	// プレイヤーのアクター
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerPawn")
-	TSubclassOf<AActor> PlayerPawn = nullptr;
-
-	//=======================================================================
-
-	// ランダム生成を有効にするか
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	bool bHasRandom = true;
-
-	// 攻撃のオブジェクト
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	TSubclassOf<AActor> RFallActor = nullptr;
-
-	// 攻撃範囲
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	TSubclassOf<AActor> RandomZone = nullptr;
-
-	// ランダム攻撃の予告時間
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	float RWarningTime = 1.0f;
-
-	// 攻撃の数
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	int32 ActorCount = 1;
-
-	// 生成エリア
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	TArray<FVector4> RSetArea{ FVector4(-1000.0f, -1000.0f, 1000.0f, 1000.0f) };
-
-	// 生成高さ
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	float RFallHeight = 1000.0f;
-
-	// 攻撃の速度
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	float RFallSpeed = 200.0f;
-
-	// 攻撃の時間
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RandomAttack")
-	float RCooldownTime = 0.0f;
-
-	//=======================================================================
-
-	// 追従攻撃の生成を有効にするか
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
-	bool bHasHoming = true;
-
-	// 攻撃のオブジェクト
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
-	TSubclassOf<AActor> HFallActor = nullptr;
-
-	// 攻撃範囲
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
-	TSubclassOf<AActor> HomingZone = nullptr;
-
-	// 追従速度
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
-	float HomingSpeed = 5.0f;
-
-	// 追従攻撃の予告時間
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
-	float HWarningTime = 1.0f;
-
-	// 生成高さ
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
-	float HFallHeight = 1000.0f;
-
-	// 攻撃の速度
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
-	float HFallSpeed = 200.0f;
-
-	// 攻撃の時間
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HomingAttack")
-	float HCooldownTime = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "攻撃の設定")
+	TArray<FAttackState> AttackState = {};
 };
