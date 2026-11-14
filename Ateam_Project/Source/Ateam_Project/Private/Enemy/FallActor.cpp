@@ -41,7 +41,7 @@ void AFallActor::Tick(float DeltaTime)
 
 	countTime += DeltaTime;
 
-	float warningTime = EnemyData->RWarningTime;
+	/*float warningTime = EnemyData->RWarningTime;
 	float fallSpeed = EnemyData->RFallSpeed;
 	if (bIsHoming)
 	{
@@ -50,21 +50,17 @@ void AFallActor::Tick(float DeltaTime)
 	}
 
 	UpdateSize(warningTime);
-	UpdateLocation(DeltaTime, warningTime, fallSpeed);
+	UpdateLocation(DeltaTime, warningTime, fallSpeed);*/
 	
 	
 }
 
 void AFallActor::SetEnemyData()
 {
-	if (EnemyData == nullptr)
+	if (!IsValid(EnemyData))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("EnemyData is not set in AFallActor"));
 		bIsConfigured = false;
-	}
-	else
-	{
-		bIsConfigured = EnemyData->IsConfigured();
 	}
 }
 
@@ -83,7 +79,7 @@ void AFallActor::SetBoxCollision()
 
 void AFallActor::SetPlayerPawn()
 {
-	PlayerPawn = UGameplayStatics::GetActorOfClass(GetWorld(), EnemyData->PlayerPawn);
+	//PlayerPawn = UGameplayStatics::GetActorOfClass(GetWorld(), EnemyData->PlayerPawn);
 	if (PlayerPawn == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerPawn is not set in FallActor"));
@@ -104,7 +100,7 @@ void AFallActor::SetZoneMesh()
 
 void AFallActor::SetZoneCollision()
 {
-	ZoneCollision = ZoneActor->FindComponentByClass<UCapsuleComponent>();
+	ZoneCollision = ZoneMesh; //ZoneActor->FindComponentByClass<UCapsuleComponent>();
 	if (ZoneCollision != nullptr)
 	{
 		ZoneCollision->OnComponentBeginOverlap.AddDynamic(this, &AFallActor::OnOverlapBegin);
@@ -134,27 +130,27 @@ void AFallActor::SetBaseSize()
 
 void AFallActor::SpawnZoneActor()
 {
-	auto zone = EnemyData->RandomZone;
-	if (bIsHoming)
-	{
-		zone = EnemyData->HomingZone;
-	}
-	// 床が見つかるまでましたを確認する
-	FVector StartTrace = GetActorLocation();
-	FVector EndTrace = StartTrace - FVector(0.f, 0.f, 10000.f);
-	FHitResult HitResult;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-	QueryParams.AddIgnoredActor(PlayerPawn);
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_WorldStatic, QueryParams))
-	{
-		StartTrace.Z = HitResult.ImpactPoint.Z;
-	}
-	else
-	{
-		StartTrace.Z = 0.0;
-	}
-	ZoneActor = GetWorld()->SpawnActor<AActor>(zone, FTransform(StartTrace));
+	//auto zone = EnemyData->RandomZone;
+	//if (bIsHoming)
+	//{
+	//	zone = EnemyData->HomingZone;
+	//}
+	//// 床が見つかるまでましたを確認する
+	//FVector StartTrace = GetActorLocation();
+	//FVector EndTrace = StartTrace - FVector(0.f, 0.f, 10000.f);
+	//FHitResult HitResult;
+	//FCollisionQueryParams QueryParams;
+	//QueryParams.AddIgnoredActor(this);
+	//QueryParams.AddIgnoredActor(PlayerPawn);
+	//if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_WorldStatic, QueryParams))
+	//{
+	//	StartTrace.Z = HitResult.ImpactPoint.Z;
+	//}
+	//else
+	//{
+	//	StartTrace.Z = 0.0;
+	//}
+	//ZoneActor = GetWorld()->SpawnActor<AActor>(zone, FTransform(StartTrace));
 
 	if (ZoneActor != nullptr)
 	{
@@ -183,7 +179,7 @@ void AFallActor::UpdateLocation(float DeltaTime, float WarningTime, float FallSp
 	FVector currentLocation = GetActorLocation();
 	FVector ZoneLocation = ZoneActor->GetActorLocation();
 
-	if (bIsHoming)
+	/*if (bIsHoming)
 	{
 		FVector direction = PlayerPawn->GetActorLocation() - currentLocation;
 		FVector Zdirection = PlayerPawn->GetActorLocation() - ZoneLocation;
@@ -197,7 +193,7 @@ void AFallActor::UpdateLocation(float DeltaTime, float WarningTime, float FallSp
 		{
 			bIsHoming = false;
 		}
-	}
+	}*/
 
 	if (countTime > WarningTime)
 	{
@@ -225,7 +221,7 @@ void AFallActor::OnOverlapBegin(
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor != this)
+	/*if (OtherActor && OtherActor != this)
 	{
 		if (OverlappedComp == ZoneCollision && OtherActor->IsA(EnemyData->PlayerPawn))
 		{
@@ -247,7 +243,7 @@ void AFallActor::OnOverlapBegin(
 			ZoneActor->Destroy();
 			Destroy();
 		}
-	}
+	}*/
 }
 
 void AFallActor::OnOverlapEnd(
@@ -256,11 +252,11 @@ void AFallActor::OnOverlapEnd(
 	UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex)
 {
-	if (OtherActor && OtherActor != this)
+	/*if (OtherActor && OtherActor != this)
 	{
 		if (OverlappedComp == ZoneCollision && OtherActor->IsA(EnemyData->PlayerPawn))
 		{
 			bIsHitPlayer = false;
 		}
-	}
+	}*/
 }

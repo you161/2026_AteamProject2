@@ -15,14 +15,10 @@ void ASubEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (EnemyData == nullptr)
+	if (!IsValid(EnemyData))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("EnemyData is not set in SubEnemy."));
 		bIsConfigured = false;
-	}
-	else
-	{
-		bIsConfigured = EnemyData->IsConfigured();
 	}
 
 	if (bIsConfigured)
@@ -51,7 +47,7 @@ void ASubEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ASubEnemy::SetPlayerPawn()
 {
-	PlayerPawn = UGameplayStatics::GetActorOfClass(GetWorld(), EnemyData->PlayerPawn);
+	//PlayerPawn = UGameplayStatics::GetActorOfClass(GetWorld(), EnemyData->PlayerPawn);
 	if (PlayerPawn == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerPawn is not set in FallActor"));

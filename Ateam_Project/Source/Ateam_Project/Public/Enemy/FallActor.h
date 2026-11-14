@@ -59,7 +59,7 @@ private:
 	TObjectPtr<AActor> PlayerPawn = nullptr;
 	TObjectPtr<AActor> ZoneActor = nullptr;
 	TObjectPtr<UStaticMeshComponent> ZoneMesh = nullptr;
-	TObjectPtr<UCapsuleComponent> ZoneCollision = nullptr;
+	TObjectPtr<UStaticMeshComponent> ZoneCollision = nullptr; //UCapsuleComponent
 	TObjectPtr<UBoxComponent> BoxCollision = nullptr;
 	FVector BaseSizeActor = FVector(0.0f, 0.0f, 0.0f);
 	FVector BaseSizeMesh = FVector(0.0f, 0.0f, 0.0f);
