@@ -4,6 +4,10 @@
 #include "Enemy/TurnMoveActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/BoxComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Enemy/EnemyActor.h"
+#include "Enemy/AttackZone.h"
+#include "Health/HealthManager.h"
 
 ATurnMoveActor::ATurnMoveActor()
 {
@@ -21,20 +25,16 @@ ATurnMoveActor::ATurnMoveActor()
 void ATurnMoveActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (EnemyData == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("EnemyData is not set in SubEnemy."));
-		bIsConfigured = false;
-	}
-	else
-	{
-		bIsConfigured = EnemyData->IsConfigured();
-	}
 
-	if (bIsConfigured)
+	EnemyActor = Cast<AEnemyActor>(GetOwner());
+
+	bIsMoveActive = false;
+	bIsValid = true;
+
+	HealthManager = Cast<AHealthManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AHealthManager::StaticClass()));
+	if (!IsValid(HealthManager))
 	{
-		SetPlayerPawn();
+		UE_LOG(LogTemp, Error, TEXT("HealthManager is null in ATurnMoveActor"));
 	}
 }
 
@@ -42,25 +42,22 @@ void ATurnMoveActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!IsValid(BoxComp) || !bIsConfigured) return;
+	if (!bIsValid) return;
 
-	Move(DeltaTime);
-
-}
-
-void ATurnMoveActor::SetPlayerPawn()
-{
-	PlayerPawn = UGameplayStatics::GetActorOfClass(GetWorld(), EnemyData->PlayerPawn);
-	if (PlayerPawn == nullptr)
+	if (bIsMoveActive)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerPawn is not set in FallActor"));
-		bIsConfigured = false;
+		TurnMove(DeltaTime);
+
+		countTime += DeltaTime;
+		float Alpha = FMath::Clamp(countTime, 0.0f, 1.0f);
+		float Size = FMath::Lerp(0.0f, MaxActorSize, Alpha);
+		SetActorScale3D(FVector(Size, Size, Size));
 	}
 }
 
-void ATurnMoveActor::Move(float DeltaTime)
+void ATurnMoveActor::TurnMove(float DeltaTime)
 {
-	FVector direction = (PlayerPawn->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+	FVector direction = (ZoneActor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 	FVector forward = GetActorForwardVector().GetSafeNormal();
 
 	// 内積を求める　(成す角)
@@ -70,7 +67,9 @@ void ATurnMoveActor::Move(float DeltaTime)
 	// 外積を求める
 	FVector Cross = FVector::CrossProduct(forward, direction);
 
-	if (!FMath::IsNearlyZero(Cross.Z))
+	
+	FRotator Rotator = GetActorRotation();
+	if (FMath::RadiansToDegrees(theta) > MaxRotation)
 	{
 		// クォータニオンを設定
 		FQuat Quaternion(Cross.GetSafeNormal(), theta * RotationSpeed * DeltaTime);
@@ -79,11 +78,17 @@ void ATurnMoveActor::Move(float DeltaTime)
 		AddActorWorldRotation(Quaternion);
 
 		// Rollをなくして横転しないように
-		FRotator Rotator = GetActorRotation();
+		Rotator = GetActorRotation();
 		Rotator.Roll = 0.0f;
 
-		SetActorRotation(Rotator);
 	}
+	// 角度が小さいなら目的地に回転させる
+	else
+	{
+		Rotator = direction.Rotation();
+	}
+
+	SetActorRotation(Rotator);
 	AddActorWorldOffset(GetActorForwardVector() * MoveSpeed * DeltaTime);
 }
 
@@ -97,6 +102,50 @@ void ATurnMoveActor::OnOverlapBegin(
 {
 	if (OtherActor && OtherActor != this)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit in TurnMoveActor!"));
+		if (OtherComp->ComponentHasTag(TEXT("Player")))
+		{
+			if (IsValid(HealthManager))
+			{
+				HealthManager->TakeDamage(CharactorType::Player);
+			}
+			
+
+			ZoneActor->Destroy();
+			Destroy();
+		}
+
+		if (OtherComp->ComponentHasTag(TEXT("Zone")))
+		{
+			if (ZoneActor->GetIsHitPlayer())
+			{
+				if (IsValid(HealthManager))
+				{
+					HealthManager->TakeDamage(CharactorType::Player);
+				}
+			}
+			ZoneActor->Destroy();
+			Destroy();
+		}
+	}
+}
+
+void ATurnMoveActor::MoveActive()
+{
+	bIsMoveActive = true;
+	if (IsValid(EnemyActor))
+	{
+		MaxActorSize = EnemyActor->GetAttackActorSize();
+		MoveSpeed = EnemyActor->GetAttackMoveSpeed();
+		RotationSpeed = EnemyActor->GetAttackRotationSpeed();
+		ZoneActor = EnemyActor->GetZoneActor();
+		FVector direction = GetActorLocation() - ZoneActor->GetActorLocation();
+		FRotator Rotator = direction.Rotation();
+		Rotator += EnemyActor->GetActorRotator();
+		SetActorRotation(Rotator);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EnemyActor is not set owner in TurnMoveActor."));
+		bIsValid = false;
 	}
 }

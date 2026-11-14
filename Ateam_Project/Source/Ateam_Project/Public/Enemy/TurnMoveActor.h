@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Enemy/EnemyData.h"	
 #include "TurnMoveActor.generated.h"
 
 class UBoxComponent;
+class AEnemyActor;
+class AAttackZone;
+class AHealthManager;
 
 UCLASS()
 class ATEAM_PROJECT_API ATurnMoveActor : public AActor
@@ -17,11 +19,13 @@ class ATEAM_PROJECT_API ATurnMoveActor : public AActor
 public:
 	ATurnMoveActor();
 
+	void MoveActive();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
-	void SetPlayerPawn();
+	void TurnMove(float DeltaTime);
 
 	UFUNCTION()
 	void OnOverlapBegin(
@@ -35,18 +39,17 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UBoxComponent> BoxComp = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "EnemyData")
-	TObjectPtr<UEnemyData> EnemyData = nullptr;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
-	float MoveSpeed = 500.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
-	float RotationSpeed = 1.0f;
+	float MaxRotation = 10.0f;
 
 private:
-	TObjectPtr<AActor> PlayerPawn = nullptr;
-	bool bIsConfigured = false;
-
-	void Move(float DeltaTime);
+	TObjectPtr<AEnemyActor> EnemyActor = nullptr;
+	TObjectPtr<AAttackZone> ZoneActor = nullptr;
+	TObjectPtr<AHealthManager> HealthManager = nullptr;
+	float MaxActorSize = 0.0f;
+	float MoveSpeed = 0.0f;
+	float RotationSpeed = 0.0f;
+	float countTime = 0.0f;
+	bool bIsValid = false;
+	bool bIsMoveActive = false;
 };
