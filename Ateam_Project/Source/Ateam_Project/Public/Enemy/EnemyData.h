@@ -40,8 +40,11 @@ struct FAttackState
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "回転速度"))
 	float RotationSpeed = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "初めに回転させるランダム範囲  X = Min Y = Max"))
-	FVector2D PitchYawRange = FVector2D::Zero();
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "移動開始時の向き(上下)  X = Min Y = Max"))
+	FVector2D PitchRange = FVector2D::Zero();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "移動開始時の向き(左右)  X = Min Y = Max"))
+	FVector2D YawRange = FVector2D::Zero();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,
 		meta = (DisplayName = "生成する範囲  X = MinX Y = MinY Z = MaxX W = MaxY"),
@@ -56,6 +59,15 @@ class ATEAM_PROJECT_API UEnemyData : public UDataAsset
 	
 public:
 	UEnemyData();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|X = 本体との距離 Y = 攻撃との距離 Z = 高さの範囲")
+	FVector AttackDistance = FVector::Zero();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|個数")
+	int32 Count = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|生成までの時間")
+	float SpawnTime = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "攻撃の設定")
 	TArray<FAttackState> AttackState = {};
