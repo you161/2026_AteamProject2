@@ -17,42 +17,60 @@ void AEnemyActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetEnemyData();
+	SetObjects();
 	SetBoxCollision();
-	RcountTime = 0.0f;
-	HcountTime = 0.0f;
+	ResetAttack();
 }
 
 void AEnemyActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!bIsConfigured) return;
+	if (bIsValid == false) return;
 
-	RcountTime += DeltaTime;
-	HcountTime += DeltaTime;
-
-	if (EnemyData->bHasRandom)
+	if (!bIsReady)
 	{
-		SpawnRandom();
-	}
-
-	if (EnemyData->bHasHoming)
-	{
-		SpawnHoming();
-	}
-}
-
-void AEnemyActor::SetEnemyData()
-{
-	if (EnemyData == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("EnemyData is not set in EnemyActor"));
-		bIsConfigured = false;
+		ReadyTime += DeltaTime;
+		if (ReadyTime > EnemyData->SpawnTime)
+		{
+			bIsReady = true;
+		}
 	}
 	else
 	{
-		bIsConfigured = EnemyData->IsConfigured();
+		SetAttackActor();
+
+		TotalTime += DeltaTime;
+		SpawnAttackActor();
+	}
+}
+
+void AEnemyActor::SetObjects()
+{
+	bIsValid = true;
+
+	if (!IsValid(EnemyData))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EnemyData is not set in EnemyActor."));
+		bIsValid = false;
+	}
+
+	if (!IsValid(PlayerPawn))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerPawn is not set in EnemyActor."));
+		bIsValid = false;
+	}
+
+	if (!IsValid(TurnMoveActor))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TurnMoveActor is not set in EnemyActor."));
+		bIsValid = false;
+	}
+
+	if (!IsValid(AttackZone))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AttackZone is not set in EnemyActor."));
+		bIsValid = false;
 	}
 }
 
@@ -76,67 +94,106 @@ void AEnemyActor::SetBoxCollision()
 		}
 	}
 
-	if (IsValid(HeadCollision))
-	{
-		HeadCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
-	}
-	else
+	if (!IsValid(HeadCollision))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("HeadCollision is not set in EnemyActor"));
-		bIsConfigured = false;
+		bIsValid = false;
 	}
 
-	if (IsValid(BodyCollision))
-	{
-		BodyCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
-	}
-	else
+	if (!IsValid(BodyCollision))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("BodyCollision is not set in EnemyActor"));
-		bIsConfigured = false;
+		bIsValid = false;
 	}
 
-	if (IsValid(LegCollision))
-	{
-		LegCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
-	}
-	else
+	if (!IsValid(LegCollision))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("LegCollision is not set in EnemyActor"));
-		bIsConfigured = false;
+		bIsValid = false;
+	}
+
+	if (!bIsValid)
+	{
+		HeadCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
+		BodyCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
+		LegCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyActor::OnOverlapBegin);
 	}
 }
 
-void AEnemyActor::SpawnRandom()
+void AEnemyActor::SetAttackActor()
 {
-	if (RcountTime > EnemyData->RCooldownTime)
+	int32 Range = FMath::Min(EnemyData->Count, AttackArray.Num());
+	for (int32 index = TurnMoveArray.Num(); index < Range; ++index)
 	{
-		for (int i = 0; i < EnemyData->ActorCount; ++i)
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		FVector AttackLocation = FVector::Zero();
+		AttackLocation.Y = EnemyData->AttackDistance.X + EnemyData->AttackDistance.Y * (index / 2);
+		if (index % 2 == 1)
 		{
-			double index = i % EnemyData->RSetArea.Num();
-			double minX = EnemyData->RSetArea[index].X;
-			double minY = EnemyData->RSetArea[index].Y;
-			double maxX = EnemyData->RSetArea[index].Z;
-			double maxY = EnemyData->RSetArea[index].W;
-			AFallActor* RandomActor = GetWorld()->SpawnActor<AFallActor>(EnemyData->RFallActor,
-				FTransform(FVector(FMath::RandRange(minX, maxX), FMath::RandRange(minY, maxY), EnemyData->RFallHeight)));
-			RandomActor->SetHoming(false);
+			AttackLocation.Y *= -1;
 		}
-		RcountTime = 0.0f;
+		AttackLocation.Z = FMath::RandRange(0.0, EnemyData->AttackDistance.Z);
+		TurnMoveArray.Add(GetWorld()->SpawnActor<ATurnMoveActor>(TurnMoveActor, FTransform(GetActorLocation() + AttackLocation), SpawnParams));
 	}
 }
 
-void AEnemyActor::SpawnHoming()
+void AEnemyActor::ResetAttack()
 {
-	if (HcountTime > EnemyData->HCooldownTime)
+	bIsReady = false;
+	ReadyTime = 0.0f;
+	TotalTime = 0.0f;
+	AttackArray = EnemyData->AttackState;
+	TurnMoveArray.Reset();
+}
+
+void AEnemyActor::SpawnAttackActor()
+{
+	TArray<int32> IndexToRemove;
+
+	AttackArray.RemoveAll([this](const FAttackState& Item)
 	{
-		AActor* PlayerPawn = UGameplayStatics::GetActorOfClass(GetWorld(), EnemyData->PlayerPawn);
-		AFallActor* HomingActor = GetWorld()->SpawnActor<AFallActor>(EnemyData->HFallActor,
-			FTransform(FVector(PlayerPawn->GetActorLocation().X, PlayerPawn->GetActorLocation().Y, EnemyData->HFallHeight)));
-		HomingActor->SetHoming(true);
-		HcountTime = 0.0f;
-		FActorSpawnParameters sp;
-	}
+		if (TotalTime > Item.AttackTime)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this;
+
+			AttackActorSize = Item.ActorSize;
+			AttackZoneSize = Item.ZoneSize;
+			AttackMoveSpeed = Item.MoveSpeed;
+			AttackRotationSpeed = Item.RotationSpeed;
+
+			ActorRotator.Pitch = FMath::RandRange(Item.PitchRange.X, Item.PitchRange.Y);
+			ActorRotator.Yaw = FMath::RandRange(Item.YawRange.X, Item.YawRange.Y);
+			if (TurnMoveArray[0]->GetActorLocation().Y < GetActorLocation().Y)
+			{
+				ActorRotator.Yaw *= -1;
+			}
+
+			FVector ZoneLocation = FVector::Zero();
+			switch (Item.AttackSeed)
+			{
+			case EAttackSeed::RandomAttack:
+				ZoneLocation.X = FMath::RandRange(Item.SpawnArea.X, Item.SpawnArea.Z);
+				ZoneLocation.Y = FMath::RandRange(Item.SpawnArea.Y, Item.SpawnArea.W);
+				ZoneLocation.Z = GroundHeight;
+				ZoneActor = GetWorld()->SpawnActor<AAttackZone>(AttackZone, FTransform(ZoneLocation), SpawnParams);
+				break;
+
+			case EAttackSeed::HomingAttack:
+				ZoneLocation = FVector(PlayerPawn->GetActorLocation().X, PlayerPawn->GetActorLocation().Y, GroundHeight);
+				ZoneActor = GetWorld()->SpawnActor<AAttackZone>(AttackZone, FTransform(ZoneLocation), SpawnParams);
+				break;
+			}
+
+			TurnMoveArray[0]->MoveActive();
+			TurnMoveArray.RemoveAt(0);
+
+			return true;
+		}
+
+		return false;
+	});
 }
 
 void AEnemyActor::OnOverlapBegin(
@@ -167,4 +224,34 @@ void AEnemyActor::OnOverlapBegin(
 
 		}
 	}
+}
+
+TObjectPtr<AAttackZone> AEnemyActor::GetZoneActor()
+{
+	return ZoneActor;
+}
+
+FRotator AEnemyActor::GetActorRotator()
+{
+	return ActorRotator;
+}
+
+float AEnemyActor::GetAttackActorSize()
+{
+	return AttackActorSize;
+}
+
+float AEnemyActor::GetAttackZoneSize()
+{
+	return AttackZoneSize;
+}
+
+float AEnemyActor::GetAttackMoveSpeed()
+{
+	return AttackMoveSpeed;
+}
+
+float AEnemyActor::GetAttackRotationSpeed()
+{
+	return AttackRotationSpeed;
 }

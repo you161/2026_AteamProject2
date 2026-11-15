@@ -29,7 +29,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "EnemyData")
 	float MoveSpeed = 100.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "EnemyData")
+	float RotationSpeed = 1.0f;
+
 private:
 	TObjectPtr<AActor> PlayerPawn = nullptr;
 	bool bIsConfigured = false;
+
+	void func(float DeltaTime);
+	void RotationMatrix(float DeltaTime);
+	void RotationMatrix2(float DeltaTime);
+
 };
