@@ -38,9 +38,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Rotate|回転速度")
     float RotateSpeed = 500.0f;
 
-	//カメラの感度
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|感度")
-    float CameraSensitivity = 1.0f;
+    //マウスの感度
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+    float MouseSensitivity = 0.1f;
+
+    //コントローラーの感度(度/秒)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+    float GamepadSensitivity = 120.0f;
 
 	//カメラの距離
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|距離")

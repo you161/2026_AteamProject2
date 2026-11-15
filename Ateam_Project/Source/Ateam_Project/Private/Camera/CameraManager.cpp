@@ -37,11 +37,11 @@ void ACameraManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-    RotateCamera();
+    RotateCamera(DeltaTime);
 }
 
 //カメラの回転を処理する関数
-void ACameraManager::RotateCamera()
+void ACameraManager::RotateCamera(float DeltaTime)
 {
     //必要なオブジェクトが有効でない場合は処理を中断
     if (!IsValid(InputManager) || !IsValid(PlayerData)
@@ -50,15 +50,21 @@ void ACameraManager::RotateCamera()
         return;
     }
 
-	//InputManagerからマウスの入力を取得
-	const FVector2D& LookInput = InputManager->GetMouseInput();
+    //マウス
+    const FVector2D MouseInput = InputManager->GetMouseInput();
+    if (!MouseInput.IsZero())
+    {
+        Yaw += MouseInput.X * PlayerData->MouseSensitivity;
+        Pitch += MouseInput.Y * PlayerData->MouseSensitivity;
+    }
 
-	//マウスの入力がある場合、YawとPitchを更新
-	if (!LookInput.IsZero())
-	{
-		Yaw += LookInput.X * PlayerData->CameraSensitivity;
-		Pitch += LookInput.Y * PlayerData->CameraSensitivity;
-	}
+    //コントローラー
+    const FVector2D GamepadInput = InputManager->GetGamepadLookInput();
+    if (!GamepadInput.IsZero())
+    {
+        Yaw += GamepadInput.X * PlayerData->GamepadSensitivity * DeltaTime;
+        Pitch += GamepadInput.Y * PlayerData->GamepadSensitivity * DeltaTime;
+    }
 
     //Yawの範囲を制限
     Yaw = FMath::Clamp(Yaw, PlayerData->MinYaw, PlayerData->MaxYaw);
