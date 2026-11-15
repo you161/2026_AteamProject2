@@ -27,6 +27,15 @@ void APlayerPawn::BeginPlay()
 	InitializeInputManager();
 
 	CurrentDirection = FVector::ZeroVector;
+	bIsMoving = false;
+
+	DamageFlashComponent = FindComponentByClass<UDamageFlashComponent>();
+
+	if (IsValid(HealthManager))
+	{
+		//ダメージ通知を受け取るよう登録する
+		HealthManager->OnDamaged.AddUObject(this, &APlayerPawn::OnDamaged);
+	}
 
 	if (!IsValid(InputManager))
 	{
@@ -67,18 +76,6 @@ void APlayerPawn::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("StaminaManager is not set in PlayerPawn."));
 		return;
 	}
-
-
-	DamageFlashComponent = FindComponentByClass<UDamageFlashComponent>();
-
-	if (IsValid(HealthManager))
-	{
-		//ダメージ通知を受け取るよう登録する
-		HealthManager->OnDamaged.AddUObject(this, &APlayerPawn::OnDamaged);
-	}
-
-	bisMoving = false;
-	bhasObject = false;
 }
 
 void APlayerPawn::Tick(float DeltaTime)
@@ -168,11 +165,11 @@ void APlayerPawn::Move(float DeltaTime)
 			AddActorWorldOffset(Slide, true);
 		}
 
-		bisMoving = true;
+		bIsMoving = true;
 	}
 	else
 	{
-		bisMoving = false;
+		bIsMoving = false;
 	}
 }
 
@@ -258,17 +255,16 @@ void APlayerPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
 }
 
 //ダメージを受けた時の処理
-void APlayerPawn::OnDamaged(CharactorType DamagedType)
+void APlayerPawn::OnDamaged(ECharacterType DamagedType)
 {
 	//自分宛てでなければ何もしない
-	if (DamagedType != CharactorType::Player)
+	if (DamagedType != ECharacterType::Player)
 	{
 		return;
 	}
 
 	if (IsValid(DamageFlashComponent))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Player Take Damage"));
 		DamageFlashComponent->PlayFlash();
 	}
 }

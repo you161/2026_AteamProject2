@@ -21,9 +21,6 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(BlueprintAssignable, Category = "Stamina")
-	FOnStaminaChanged OnStaminaChanged;
-
 	//スタミナの減少と回復を制御する関数
 	void SetIsSprinting(bool bSprinting) { bIsSprinting = bSprinting; }
 	//ダッシュ中かどうかを返す
@@ -32,6 +29,8 @@ public:
 	bool GetCanSprint() const { return bCanSprint; }
 	//現在のスタミナ割合
 	float GetStaminaRatio() const { return (MaxStamina > 0.0f) ? Stamina / MaxStamina : 0.0f; }
+
+	FOnStaminaChanged OnStaminaChanged;
 
 private:
 	//スタミナの減少と回復を処理する関数

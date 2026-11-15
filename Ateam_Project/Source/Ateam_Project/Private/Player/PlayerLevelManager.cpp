@@ -30,26 +30,42 @@ void APlayerLevelManager::AddExp()
 		return;
 	}
 
+	const TArray<float>& GainTable = PlayerLevelData->GaugeGainTable;
+	const TArray<float>& MaxTable = PlayerLevelData->MaxGaugeTable;
+
+	if (GainTable.Num() == 0 || MaxTable.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Level table is empty in APlayerLevelManager::AddExp"));
+		return;
+	}
+
+	//現在のレベルがテーブルの範囲内かを確認する
+	if (!MaxTable.IsValidIndex(CurrentLevel))
+	{
+		UE_LOG(LogTemp, Error, TEXT("CurrentLevel is out of range of MaxGaugeTable"));
+		return;
+	}
+
 	//オブジェクトの個数取得
-	int32 Index = FMath::Clamp(ThrowableManager->GetThrownCount() , 0, PlayerLevelData->GaugeGainTable.Num() - 1);
-	
+	const int32 Index = FMath::Clamp(ThrowableManager->GetThrownCount(), 0, GainTable.Num() - 1);
+
 	//経験値を追加
-	LevelGage += PlayerLevelData->GaugeGainTable[Index];
+	LevelGage += GainTable[Index];
 
 	//レベルアップの判定
-	if (LevelGage >= PlayerLevelData->MaxGaugeTable[CurrentLevel])
+	if (LevelGage >= MaxTable[CurrentLevel])
 	{
-		//レベルアップ処理
-		if (CurrentLevel + 1 < PlayerLevelData->MaxGaugeTable.Num())
+		//次のレベルが存在すればレベルアップ
+		if (MaxTable.IsValidIndex(CurrentLevel + 1))
 		{
-			LevelGage = LevelGage - PlayerLevelData->MaxGaugeTable[CurrentLevel];
+			LevelGage -= MaxTable[CurrentLevel];
 			CurrentLevel++;
 			UE_LOG(LogTemp, Log, TEXT("レベルアップ！ 現在のレベル: %d"), CurrentLevel);
 		}
 		else
 		{
 			UE_LOG(LogTemp, Log, TEXT("最大レベルに到達しました。現在のレベル: %d"), CurrentLevel);
-			LevelGage = PlayerLevelData->MaxGaugeTable[CurrentLevel];
+			LevelGage = MaxTable[CurrentLevel];
 		}
 	}
 	else

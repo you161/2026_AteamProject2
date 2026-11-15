@@ -41,8 +41,8 @@ void AHealthManager::BeginPlay()
 	}
 	else
 	{
-		MaxHealth[CharactorType::Player] = HealthData->PlayerMaxHealth;
-		MaxHealth[CharactorType::Enemy] = HealthData->EnemyMaxHealth;
+		MaxHealth[ECharacterType::Player] = HealthData->PlayerMaxHealth;
+		MaxHealth[ECharacterType::Enemy] = HealthData->EnemyMaxHealth;
 	}
 
 	if (!IsValid(ThrowableManager))
@@ -52,7 +52,7 @@ void AHealthManager::BeginPlay()
 }
 
 //ダメージ処理
-void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
+void AHealthManager::TakeDamage(ECharacterType CurrentCharactorType)
 {
 	int32 Type = CurrentCharactorType;
 
@@ -63,11 +63,11 @@ void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
 		return;
 	}
 
-	if (Type == CharactorType::Player)
+	if (Type == ECharacterType::Player)
 	{
 		CurrentDamage = EnemyDamageData->EnemyAttackDamage;
 	}
-	else if(Type == CharactorType::Enemy)
+	else if(Type == ECharacterType::Enemy)
 	{
 		const TArray<float>& Table = PlayerDamageData->PlayerAttackDamage;
 
@@ -115,8 +115,8 @@ void AHealthManager::InitializeHealth(UHitPointBar* PlayerBar, UHitPointBar* Ene
 		CurrentHealth[i] = MaxHealth[i];
 	}
 
-	HitPointBar[CharactorType::Player] = PlayerBar;
-	HitPointBar[CharactorType::Enemy] = EnemyBar;
+	HitPointBar[ECharacterType::Player] = PlayerBar;
+	HitPointBar[ECharacterType::Enemy] = EnemyBar;
 
 	if (IsValid(PlayerBar))
 	{
@@ -143,18 +143,18 @@ void AHealthManager::OnHPBarEmptied(UHitPointBar* EmptiedBar)
 		return;
 	}
 
-	if (EmptiedBar == HitPointBar[Player])
+	if (EmptiedBar == HitPointBar[ECharacterType::Player])
 	{
 		GameJudge->GameOver();
 	}
-	else if (EmptiedBar == HitPointBar[Enemy])
+	else if (EmptiedBar == HitPointBar[ECharacterType::Enemy])
 	{
 		GameJudge->GameClear();
 	}
 }
 
 //HP参照関数
-float AHealthManager::GetHealth(CharactorType CurrentCharactorType)const
+float AHealthManager::GetHealth(ECharacterType CurrentCharactorType)const
 {
 	return CurrentHealth[static_cast<int32>(CurrentCharactorType)];
 }

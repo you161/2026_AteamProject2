@@ -12,13 +12,13 @@ class UEnemyDamageData;
 class UHealthData;
 class AThrowableManager;
 
-enum CharactorType
+enum ECharacterType 
 {
 	Player = 0,
 	Enemy = 1,
 };
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnDamaged, CharactorType);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnDamaged, ECharacterType);
 
 /*
 * HP管理クラス
@@ -38,11 +38,11 @@ protected:
 
 public:	
 	//ダメージ分HPを減らす関数
-	void TakeDamage(CharactorType CurrentCharactorType);
+	void TakeDamage(ECharacterType CurrentCharactorType);
 	//初期化処理
 	void InitializeHealth(UHitPointBar* PlayerBar, UHitPointBar* EnemyBar);
 	//HP参照関数
-	float GetHealth(CharactorType CurrentCharactorType)const;
+	float GetHealth(ECharacterType CurrentCharactorType)const;
 
 	//ダメージを受けた時に呼ばれるデリゲート
 	FOnDamaged OnDamaged;

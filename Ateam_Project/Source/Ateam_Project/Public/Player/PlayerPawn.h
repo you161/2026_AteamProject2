@@ -25,7 +25,7 @@ public:
 	APlayerPawn();
 	virtual void Tick(float DeltaTime) override;
 	//プレイヤーが移動中かどうかを取得する関数
-	bool GetIsMoving() const { return bisMoving; }
+	bool GetIsMoving() const { return bIsMoving; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -44,7 +44,7 @@ private:
 	//回転処理を行う関数
 	void Rotate(float DeltaTime);
 	//ダメージを受けたときに呼ばれる
-	void OnDamaged(CharactorType DamagedType);
+	void OnDamaged(ECharacterType DamagedType);
 
 protected:
 	//プレイヤーのデータを格納するデータアセット
@@ -73,6 +73,9 @@ private:
 	//入力管理を行うオブジェクト
 	UPROPERTY(Transient)
 	TObjectPtr<UInputManager> InputManager = nullptr;
+	//被ダメージ時の点滅コンポーネント
+	UPROPERTY()
+	TObjectPtr<UDamageFlashComponent> DamageFlashComponent = nullptr;
 
 	//カメラの現在の方向を保持する変数
 	FVector CurrentDirection = FVector::ZeroVector;
@@ -81,11 +84,5 @@ private:
 	//カメラの現在の右方向を保持する変数
 	FVector CurrentCameraRight = FVector::ZeroVector;
 	//プレイヤーが移動中かどうかを保持する変数
-	bool bisMoving = false;
-	//減速中
-	bool bhasObject = false;
-
-	//被ダメージ時の点滅コンポーネント
-	UPROPERTY()
-	TObjectPtr<UDamageFlashComponent> DamageFlashComponent = nullptr;
+	bool bIsMoving = false;
 };

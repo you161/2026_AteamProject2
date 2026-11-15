@@ -193,7 +193,7 @@ void AThrowableObject::OnOverlap(
     if (CurrentState == EThrowableState::Thrown && Cast<AEnemyActor>(OtherActor) 
         && IsValid(HealthManager) && IsValid(PlayerLevelManager))
     {
-        HealthManager->TakeDamage(CharactorType::Enemy);
+        HealthManager->TakeDamage(ECharacterType::Enemy);
         PlayerLevelManager->AddExp();
         Destroy();
         return;

@@ -34,7 +34,7 @@ protected:
 	TObjectPtr<UPlayerLevelData> PlayerLevelData = nullptr;
 
 	//拾ったオブジェクトを管理するマネージャー
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HealthManager|Throwable")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerLevelManager|Throwable")
 	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
 
 private:
