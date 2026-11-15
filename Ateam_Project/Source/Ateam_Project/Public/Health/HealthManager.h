@@ -18,6 +18,8 @@ enum CharactorType
 	Enemy = 1,
 };
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnDamaged, CharactorType);
+
 /*
 * HP管理クラス
 */
@@ -41,6 +43,9 @@ public:
 	void InitializeHealth(UHitPointBar* PlayerBar, UHitPointBar* EnemyBar);
 	//HP参照関数
 	float GetHealth(CharactorType CurrentCharactorType)const;
+
+	//ダメージを受けた時に呼ばれるデリゲート
+	FOnDamaged OnDamaged;
 
 private:
 

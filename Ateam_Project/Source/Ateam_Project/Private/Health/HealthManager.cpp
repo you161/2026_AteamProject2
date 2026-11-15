@@ -92,6 +92,9 @@ void AHealthManager::TakeDamage(CharactorType CurrentCharactorType)
 	CurrentHealth[Type] = FMath::Max(0, CurrentHealth[Type] - CurrentDamage);
 	TotalDamage[Type] += CurrentDamage;
 
+	//ダメージを受けたことを通知する
+	OnDamaged.Broadcast(CurrentCharactorType);
+
 	if (IsValid(HitPointBar[Type]))
 	{
 		HitPointBar[Type]->UpdateHitPointBar(MaxHealth[Type], TotalDamage[Type]);
