@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Health/HealthManager.h"
 #include "PlayerPawn.generated.h"
 
 class UInputManager;
@@ -10,6 +11,7 @@ class UCapsuleComponent;
 class AThrowableManager;
 class APlayerLevelManager;
 class AStaminaManager;
+class UDamageFlashComponent;
 
 /**
  * 入力の値を受け取り、プレイヤーの移動やジャンプの状態を管理するクラス
@@ -21,14 +23,13 @@ class ATEAM_PROJECT_API APlayerPawn : public APawn
 
 public:
 	APlayerPawn();
-
 	virtual void Tick(float DeltaTime) override;
-
 	//プレイヤーが移動中かどうかを取得する関数
 	bool GetIsMoving() const { return bisMoving; }
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason)override;
 
 	//コントローラーがPossessしたときに呼ばれる
 	virtual void PossessedBy(AController* NewController) override;
@@ -42,6 +43,8 @@ private:
 	void Move(float DeltaTime);
 	//回転処理を行う関数
 	void Rotate(float DeltaTime);
+	//ダメージを受けたときに呼ばれる
+	void OnDamaged(CharactorType DamagedType);
 
 protected:
 	//プレイヤーのデータを格納するデータアセット
@@ -59,12 +62,14 @@ protected:
 	//プレイヤーのレベルを管理するマネージャー
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|Level")
 	TObjectPtr<APlayerLevelManager> PlayerLevelManager = nullptr;
+	//HPを管理するマネージャー
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|Health")
+	TObjectPtr<AHealthManager> HealthManager = nullptr;
 	//プレイヤーの当たり判定を行うコリジョン
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
-	TObjectPtr<UCapsuleComponent> CapsuleCollision;
+	TObjectPtr<UCapsuleComponent> CapsuleCollision = nullptr;
 
 private:
-
 	//入力管理を行うオブジェクト
 	UPROPERTY(Transient)
 	TObjectPtr<UInputManager> InputManager = nullptr;
@@ -79,4 +84,8 @@ private:
 	bool bisMoving = false;
 	//減速中
 	bool bhasObject = false;
+
+	//被ダメージ時の点滅コンポーネント
+	UPROPERTY()
+	TObjectPtr<UDamageFlashComponent> DamageFlashComponent = nullptr;
 };

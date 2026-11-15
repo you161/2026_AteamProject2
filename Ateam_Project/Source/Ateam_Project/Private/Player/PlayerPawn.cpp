@@ -6,6 +6,7 @@
 #include "Throwable/ThrowableManager.h"
 #include "Player/PlayerLevelManager.h"
 #include "Player/StaminaManager.h"
+#include "Component/DamageFlashComponent.h"
 
 APlayerPawn::APlayerPawn()
 {
@@ -65,6 +66,15 @@ void APlayerPawn::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("StaminaManager is not set in PlayerPawn."));
 		return;
+	}
+
+
+	DamageFlashComponent = FindComponentByClass<UDamageFlashComponent>();
+
+	if (IsValid(HealthManager))
+	{
+		//ダメージ通知を受け取るよう登録する
+		HealthManager->OnDamaged.AddUObject(this, &APlayerPawn::OnDamaged);
 	}
 
 	bisMoving = false;
@@ -234,4 +244,31 @@ void APlayerPawn::InitializeInputManager()
 	}
 
 	InputManager = InputReceiver->GetInputManager();
+}
+
+void APlayerPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	//登録を解除する
+	if (IsValid(HealthManager))
+	{
+		HealthManager->OnDamaged.RemoveAll(this);
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+//ダメージを受けた時の処理
+void APlayerPawn::OnDamaged(CharactorType DamagedType)
+{
+	//自分宛てでなければ何もしない
+	if (DamagedType != CharactorType::Player)
+	{
+		return;
+	}
+
+	if (IsValid(DamageFlashComponent))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Player Take Damage"));
+		DamageFlashComponent->PlayFlash();
+	}
 }
