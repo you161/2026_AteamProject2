@@ -2,8 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "Health/HealthManager.h"
+#include "Health/CharacterType.h"
 #include "PlayerPawn.generated.h"
+
+DECLARE_LOG_CATEGORY_EXTERN(LogPlayerPawn, Log, All);
 
 class UInputManager;
 class UPlayerData;
@@ -11,10 +13,11 @@ class UCapsuleComponent;
 class AThrowableManager;
 class APlayerLevelManager;
 class AStaminaManager;
+class AHealthManager;
 class UDamageFlashComponent;
 
 /**
- * 入力の値を受け取り、プレイヤーの移動やジャンプの状態を管理するクラス
+ * 入力の値を受け取り、プレイヤーの移動や回転を管理するクラス
  */
 UCLASS()
 class ATEAM_PROJECT_API APlayerPawn : public APawn
@@ -23,13 +26,16 @@ class ATEAM_PROJECT_API APlayerPawn : public APawn
 
 public:
 	APlayerPawn();
+
 	virtual void Tick(float DeltaTime) override;
+
 	//プレイヤーが移動中かどうかを取得する関数
 	bool GetIsMoving() const { return bIsMoving; }
 
 protected:
+
 	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason)override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	//コントローラーがPossessしたときに呼ばれる
 	virtual void PossessedBy(AController* NewController) override;
@@ -39,10 +45,20 @@ protected:
 private:
 	//InputManagerを初期化する関数
 	void InitializeInputManager();
+	//必要な参照が設定されているか確認してログに出す関数
+	void ValidateReferences() const;
+	//Tickで必要な参照がそろっているかを返す関数
+	bool HasRequiredReferences() const;
 	//移動処理を行う関数
 	void Move(float DeltaTime);
 	//回転処理を行う関数
 	void Rotate(float DeltaTime);
+	//入力とカメラの向きから移動方向を更新する関数
+	void UpdateMoveDirection(const FVector2D& MoveInput);
+	//現在のレベルと所持数に応じた基本移動速度を返す関数
+	float GetMoveSpeed() const;
+	//衝突したら壁に沿って滑るように移動する関数
+	void MoveWithSlide(const FVector& Delta);
 	//ダメージを受けたときに呼ばれる
 	void OnDamaged(ECharacterType DamagedType);
 
@@ -74,15 +90,10 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UInputManager> InputManager = nullptr;
 	//被ダメージ時の点滅コンポーネント
-	UPROPERTY()
+	UPROPERTY(Transient)
 	TObjectPtr<UDamageFlashComponent> DamageFlashComponent = nullptr;
-
-	//カメラの現在の方向を保持する変数
+	//現在の移動方向(水平・正規化済み)
 	FVector CurrentDirection = FVector::ZeroVector;
-	//カメラの現在の前方向を保持する変数
-	FVector CurrentCameraForward = FVector::ZeroVector;
-	//カメラの現在の右方向を保持する変数
-	FVector CurrentCameraRight = FVector::ZeroVector;
-	//プレイヤーが移動中かどうかを保持する変数
+	//プレイヤーが移動中かどうか
 	bool bIsMoving = false;
 };

@@ -1,11 +1,12 @@
-
 #include "Player/PlayerLevelManager.h"
 #include "Player/PlayerLevelData.h"
 #include "Throwable/ThrowableManager.h"
 
+DEFINE_LOG_CATEGORY(LogPlayerLevel);
+
 APlayerLevelManager::APlayerLevelManager()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void APlayerLevelManager::BeginPlay()
@@ -13,63 +14,71 @@ void APlayerLevelManager::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentLevel = 1;
-	LevelGage = 0.0f;
-}
-
-void APlayerLevelManager::AddExp()
-{
-	if (!IsValid(PlayerLevelData))
-	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerLevelData is null in APlayerLevelManager::AddExp"));
-		return;
-	}
+	LevelGauge = 0.0f;
 
 	if (!IsValid(ThrowableManager))
 	{
-		UE_LOG(LogTemp, Error, TEXT("ThrowableManager is null in APlayerLevelManager::AddExp"));
+		UE_LOG(LogPlayerLevel, Error, TEXT("ThrowableManager is null in APlayerLevelManager::BeginPlay"));
+		return;
+	}
+
+	ThrowableManager->OnHitEnemy.AddUObject(this, &APlayerLevelManager::AddExp);
+}
+
+void APlayerLevelManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (IsValid(ThrowableManager))
+	{
+		ThrowableManager->OnHitEnemy.RemoveAll(this);
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+//経験値を追加する
+void APlayerLevelManager::AddExp(int32 StackCount)
+{
+	if (!IsValid(PlayerLevelData))
+	{
+		UE_LOG(LogPlayerLevel, Error, TEXT("PlayerLevelData is null in APlayerLevelManager::AddExp"));
 		return;
 	}
 
 	const TArray<float>& GainTable = PlayerLevelData->GaugeGainTable;
 	const TArray<float>& MaxTable = PlayerLevelData->MaxGaugeTable;
 
-	if (GainTable.Num() == 0 || MaxTable.Num() == 0)
+	if (GainTable.IsEmpty() || MaxTable.IsEmpty())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Level table is empty in APlayerLevelManager::AddExp"));
+		UE_LOG(LogPlayerLevel, Error, TEXT("Level table is empty in APlayerLevelManager::AddExp"));
 		return;
 	}
 
 	//現在のレベルがテーブルの範囲内かを確認する
 	if (!MaxTable.IsValidIndex(CurrentLevel))
 	{
-		UE_LOG(LogTemp, Error, TEXT("CurrentLevel is out of range of MaxGaugeTable"));
+		UE_LOG(LogPlayerLevel, Error, TEXT("CurrentLevel is out of range of MaxGaugeTable"));
 		return;
 	}
 
-	//オブジェクトの個数取得
-	const int32 Index = FMath::Clamp(ThrowableManager->GetThrownCount(), 0, GainTable.Num() - 1);
-
-	//経験値を追加
-	LevelGage += GainTable[Index];
+	//投げた時の個数で獲得量を決定する
+	const int32 GainIndex = FMath::Clamp(StackCount, 0, GainTable.Num() - 1);
+	LevelGauge += GainTable[GainIndex];
 
 	//レベルアップの判定
-	if (LevelGage >= MaxTable[CurrentLevel])
+	while (LevelGauge >= MaxTable[CurrentLevel])
 	{
-		//次のレベルが存在すればレベルアップ
-		if (MaxTable.IsValidIndex(CurrentLevel + 1))
+		//最大レベルならゲージを上限で止める
+		if (!MaxTable.IsValidIndex(CurrentLevel + 1))
 		{
-			LevelGage -= MaxTable[CurrentLevel];
-			CurrentLevel++;
-			UE_LOG(LogTemp, Log, TEXT("レベルアップ！ 現在のレベル: %d"), CurrentLevel);
+			LevelGauge = MaxTable[CurrentLevel];
+			UE_LOG(LogPlayerLevel, Log, TEXT("最大レベルに到達しました。現在のレベル: %d"), CurrentLevel);
+			return;
 		}
-		else
-		{
-			UE_LOG(LogTemp, Log, TEXT("最大レベルに到達しました。現在のレベル: %d"), CurrentLevel);
-			LevelGage = MaxTable[CurrentLevel];
-		}
+
+		LevelGauge -= MaxTable[CurrentLevel];
+		CurrentLevel++;
+		UE_LOG(LogPlayerLevel, Log, TEXT("レベルアップ！ 現在のレベル: %d"), CurrentLevel);
 	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("経験値を追加しました。現在の経験値: %.2f"), LevelGage);
-	}
+
+	UE_LOG(LogPlayerLevel, Log, TEXT("経験値を追加しました。現在の経験値: %.2f"), LevelGauge);
 }

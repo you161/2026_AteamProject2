@@ -1,6 +1,6 @@
-
 #include "Throwable/ThrowableObjectSpawner.h"
 #include "Throwable/ThrowableObject.h"
+#include "Throwable/ThrowableManager.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
 
@@ -12,15 +12,18 @@ AThrowableObjectSpawner::AThrowableObjectSpawner()
 void AThrowableObjectSpawner::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (!IsValid(SourceObject))
+
+	if (!ObjectClass)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[%s] SourceObject is not set."), *GetName());
+		UE_LOG(LogThrowable, Error, TEXT("[%s] ObjectClass is not set."), *GetName());
 		return;
 	}
 
-	SourceObject->SetActorHiddenInGame(true);
-	SourceObject->SetActorEnableCollision(false);
+	if (!IsValid(ThrowableManager))
+	{
+		UE_LOG(LogThrowable, Error, TEXT("[%s] ThrowableManager is not set."), *GetName());
+		return;
+	}
 
 	GetWorldTimerManager().SetTimer(
 		SpawnTimerHandle,
@@ -39,22 +42,10 @@ void AThrowableObjectSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-//投擲オブジェクトを生成する。
+//投擲オブジェクトを生成する
 void AThrowableObjectSpawner::SpawnObject()
 {
-	if (!IsValid(SourceObject))
-	{
-		return;
-	}
-
-	//破棄されたオブジェクトを除く
-	for (auto It = SpawnedObjectPointIndices.CreateIterator(); It; ++It)
-	{
-		if (!IsValid(It.Key()))
-		{
-			It.RemoveCurrent();
-		}
-	}
+	RemoveDestroyedObjects();
 
 	//上限チェック
 	if (MaxSpawnCount > 0 && SpawnedObjectPointIndices.Num() >= MaxSpawnCount)
@@ -62,14 +53,14 @@ void AThrowableObjectSpawner::SpawnObject()
 		return;
 	}
 
-	//生成されているSpanwPointの情報
+	//使用中のスポーン位置
 	TSet<int32> UsedIndices = {};
-	for (const TPair<TObjectPtr<AThrowableObject>, int32>& Pair : SpawnedObjectPointIndices)
+	for (const TPair<TWeakObjectPtr<AThrowableObject>, int32>& Pair : SpawnedObjectPointIndices)
 	{
 		UsedIndices.Add(Pair.Value);
 	}
 
-	//生成されていないSpawnPointの情報
+	//空いているスポーン位置
 	TArray<int32> AvailableIndices = {};
 	for (int32 Index = 0; Index < SpawnLocations.Num(); ++Index)
 	{
@@ -79,7 +70,7 @@ void AThrowableObjectSpawner::SpawnObject()
 		}
 	}
 
-	//空いている位置がなければ生成しない。
+	//空いている位置がなければ生成しない
 	if (AvailableIndices.IsEmpty())
 	{
 		return;
@@ -87,26 +78,37 @@ void AThrowableObjectSpawner::SpawnObject()
 
 	//ランダムで生成位置を決定
 	const int32 SelectedIndex = AvailableIndices[FMath::RandRange(0, AvailableIndices.Num() - 1)];
-	const FVector SpawnLocation = SpawnLocations[SelectedIndex]->GetActorLocation();
+	const FVector SpawnLocation = SpawnLocations[SelectedIndex]->GetActorLocation() + SpawnOffset;
+	const FTransform SpawnTransform(GetActorRotation(), SpawnLocation);
 
-	//オブジェクトの生成
-	FActorSpawnParameters Params;
-	Params.Template = SourceObject;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	AThrowableObject* NewObject = GetWorld()->SpawnActor<AThrowableObject>(
-		SourceObject->GetClass(),
-		SpawnLocation,
-		GetActorRotation(),
-		Params
+	AThrowableObject* SpawnedObject = GetWorld()->SpawnActorDeferred<AThrowableObject>(
+		ObjectClass,
+		SpawnTransform,
+		nullptr,
+		nullptr,
+		ESpawnActorCollisionHandlingMethod::AlwaysSpawn
 	);
 
-	if (IsValid(NewObject))
+	if (!IsValid(SpawnedObject))
 	{
-		NewObject->SetActorLocation(SpawnLocation);
-		NewObject->SetActorHiddenInGame(false);
-		NewObject->SetActorEnableCollision(true);
+		UE_LOG(LogThrowable, Error, TEXT("[%s] Failed to spawn throwable object."), *GetName());
+		return;
+	}
 
-		SpawnedObjectPointIndices.Add(NewObject, SelectedIndex);
+	SpawnedObject->SetThrowableManager(ThrowableManager);
+	SpawnedObject->FinishSpawning(SpawnTransform);
+
+	SpawnedObjectPointIndices.Add(SpawnedObject, SelectedIndex);
+}
+
+//破棄されたオブジェクトを管理リストから除く
+void AThrowableObjectSpawner::RemoveDestroyedObjects()
+{
+	for (auto It = SpawnedObjectPointIndices.CreateIterator(); It; ++It)
+	{
+		if (!It.Key().IsValid())
+		{
+			It.RemoveCurrent();
+		}
 	}
 }

@@ -1,13 +1,23 @@
-
 #include "Health/HealthManager.h"
 #include "Health/HitPointBar.h"
-#include "Kismet/GameplayStatics.h"
 #include "GameManager/GameJudge.h"
 #include "Player/PlayerDamageData.h"
 #include "Enemy/EnemyDamageData.h"
 #include "Health/HealthData.h"
 #include "Throwable/ThrowableManager.h"
-#include "Engine/Engine.h"
+
+DEFINE_LOG_CATEGORY(LogHealth);
+
+namespace
+{
+	//キャラクターの種類数
+	constexpr int32 CharacterCount = static_cast<int32>(ECharacterType::Count);
+	//ECharacterType を配列の添字に変換する
+	int32 ToIndex(ECharacterType Type)
+	{
+		return static_cast<int32>(Type);
+	}
+}
 
 AHealthManager::AHealthManager()
 {
@@ -18,143 +28,192 @@ void AHealthManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	for (int32 i = 0; i < TotalDamage.Num(); i++)
+	bIsGameFinished = false;
+	EnsureInitialized();
+
+	if (!IsValid(ThrowableManager))
 	{
-		TotalDamage[i] = 0;
+		UE_LOG(LogHealth, Error, TEXT("ThrowableManager is null in AHealthManager::BeginPlay"));
+		return;
 	}
 
-	bIsGameFinished = false;
+	ThrowableManager->OnHitEnemy.AddUObject(this, &AHealthManager::HandleThrowableHitEnemy);
+}
 
-	if (!IsValid(PlayerDamageData))
+void AHealthManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (IsValid(ThrowableManager))
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerDamageData is null in AHealthManager::TakeDamage"));
+		ThrowableManager->OnHitEnemy.RemoveAll(this);
+	}
+
+	for (const TWeakObjectPtr<UHitPointBar>& Bar : HitPointBars)
+	{
+		if (Bar.IsValid())
+		{
+			Bar->OnHPBarEmptied.RemoveAll(this);
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+//HPの配列を初期化する
+void AHealthManager::EnsureInitialized()
+{
+	if (bIsInitialized)
+	{
+		return;
+	}
+
+	bIsInitialized = true;
+
+	MaxHealth.Init(0.0f, CharacterCount);
+	CurrentHealth.Init(0.0f, CharacterCount);
+	HitPointBars.SetNum(CharacterCount);
+
+	if (!IsValid(HealthData))
+	{
+		UE_LOG(LogHealth, Error, TEXT("HealthData is null in AHealthManager::EnsureInitialized"));
+		return;
+	}
+
+	MaxHealth[ToIndex(ECharacterType::Player)] = HealthData->PlayerMaxHealth;
+	MaxHealth[ToIndex(ECharacterType::Enemy)] = HealthData->EnemyMaxHealth;
+	CurrentHealth = MaxHealth;
+}
+
+//指定したキャラクターにダメージを与える
+void AHealthManager::ApplyDamage(ECharacterType Target, float DamageAmount)
+{
+	EnsureInitialized();
+
+	const int32 Index = ToIndex(Target);
+
+	if (!CurrentHealth.IsValidIndex(Index))
+	{
+		UE_LOG(LogHealth, Error, TEXT("Invalid target in AHealthManager::ApplyDamage"));
+		return;
+	}
+
+	if (DamageAmount <= 0.0f)
+	{
+		UE_LOG(LogHealth, Warning, TEXT("DamageAmount is zero or negative in AHealthManager::ApplyDamage"));
+		return;
+	}
+
+	CurrentHealth[Index] = FMath::Max(0.0f, CurrentHealth[Index] - DamageAmount);
+
+	//ダメージを受けたことを通知する
+	OnDamaged.Broadcast(Target);
+
+	UHitPointBar* Bar = HitPointBars[Index].Get();
+
+	if (!IsValid(Bar))
+	{
+		UE_LOG(LogHealth, Error, TEXT("HitPointBar is null in AHealthManager::ApplyDamage"));
+		return;
+	}
+
+	Bar->UpdateHitPointBar(MaxHealth[Index], MaxHealth[Index] - CurrentHealth[Index]);
+}
+
+//敵の攻撃でプレイヤーにダメージを与える
+void AHealthManager::TakeDamage(ECharacterType Target)
+{
+	if (Target != ECharacterType::Player)
+	{
+		UE_LOG(LogHealth, Warning, TEXT("TakeDamage only supports ECharacterType::Player. Use ApplyDamage instead."));
+		return;
 	}
 
 	if (!IsValid(EnemyDamageData))
 	{
-		UE_LOG(LogTemp, Error, TEXT("EnemyDamageData is null in AHealthManager::TakeDamage"));
+		UE_LOG(LogHealth, Error, TEXT("EnemyDamageData is null in AHealthManager::TakeDamage"));
+		return;
 	}
 
-	if (!IsValid(HealthData))
-	{
-		UE_LOG(LogTemp, Error, TEXT("HealthData is null in AHealthManager::TakeDamage"));
-	}
-	else
-	{
-		MaxHealth[ECharacterType::Player] = HealthData->PlayerMaxHealth;
-		MaxHealth[ECharacterType::Enemy] = HealthData->EnemyMaxHealth;
-	}
-
-	if (!IsValid(ThrowableManager))
-	{
-		UE_LOG(LogTemp, Error, TEXT("ThrowableManager is null in AHealthManager::TakeDamage"));
-	}
+	ApplyDamage(ECharacterType::Player, EnemyDamageData->EnemyAttackDamage);
 }
 
-//ダメージ処理
-void AHealthManager::TakeDamage(ECharacterType CurrentCharactorType)
+//投擲オブジェクトが敵に当たった時の処理
+void AHealthManager::HandleThrowableHitEnemy(int32 StackCount)
 {
-	int32 Type = CurrentCharactorType;
-
-	float CurrentDamage = 0.0f;
-
-	if(!IsValid(PlayerDamageData)|| !IsValid(EnemyDamageData)|| !IsValid(ThrowableManager))
+	if (!IsValid(PlayerDamageData))
 	{
+		UE_LOG(LogHealth, Error, TEXT("PlayerDamageData is null in AHealthManager::HandleThrowableHitEnemy"));
 		return;
 	}
 
-	if (Type == ECharacterType::Player)
-	{
-		CurrentDamage = EnemyDamageData->EnemyAttackDamage;
-	}
-	else if(Type == ECharacterType::Enemy)
-	{
-		const TArray<float>& Table = PlayerDamageData->PlayerAttackDamage;
+	const TArray<float>& Table = PlayerDamageData->PlayerAttackDamage;
 
-		if (Table.Num() == 0)
-		{
-			UE_LOG(LogTemp, Error, TEXT("PlayerAttackDamage is empty"));
-			return;
-		}
-
-		//投げた時の個数を取得して、ダメージ量を決定する
-		CollectedCount = ThrowableManager->GetThrownCount();
-		const int32 Index = FMath::Clamp(CollectedCount, 0, Table.Num() - 1);
-		CurrentDamage = Table[Index];
-	}
-
-	if (CurrentDamage <= 0)
+	if (Table.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CurrentDamage is zero or negative in AHealthManager::TakeDamage"));
+		UE_LOG(LogHealth, Error, TEXT("PlayerAttackDamage is empty in AHealthManager::HandleThrowableHitEnemy"));
 		return;
 	}
 
-	CurrentHealth[Type] = FMath::Max(0, CurrentHealth[Type] - CurrentDamage);
-	TotalDamage[Type] += CurrentDamage;
-
-	//ダメージを受けたことを通知する
-	OnDamaged.Broadcast(CurrentCharactorType);
-
-	if (IsValid(HitPointBar[Type]))
-	{
-		HitPointBar[Type]->UpdateHitPointBar(MaxHealth[Type], TotalDamage[Type]);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("HitPointBar is null in AHealthManager::TakeDamage"));
-	}
+	//投げた時の個数でダメージ量を決定する
+	const int32 Index = FMath::Clamp(StackCount, 0, Table.Num() - 1);
+	ApplyDamage(ECharacterType::Enemy, Table[Index]);
 }
 
+//HPバー設定
 void AHealthManager::InitializeHealth(UHitPointBar* PlayerBar, UHitPointBar* EnemyBar)
 {
-	CurrentHealth.SetNum(MaxHealth.Num());
-	HitPointBar.SetNum(MaxHealth.Num());
+	EnsureInitialized();
 
-	for (int32 i = 0; i < MaxHealth.Num(); i++)
-	{
-		CurrentHealth[i] = MaxHealth[i];
-	}
+	BindHitPointBar(ECharacterType::Player, PlayerBar);
+	BindHitPointBar(ECharacterType::Enemy, EnemyBar);
+}
 
-	HitPointBar[ECharacterType::Player] = PlayerBar;
-	HitPointBar[ECharacterType::Enemy] = EnemyBar;
+//HPバーを関連付けて空になった通知を受け取る
+void AHealthManager::BindHitPointBar(ECharacterType Target, UHitPointBar* Bar)
+{
+	HitPointBars[ToIndex(Target)] = Bar;
 
-	if (IsValid(PlayerBar))
+	if (IsValid(Bar))
 	{
-		PlayerBar->OnHPBarEmptied.AddUObject(this, &AHealthManager::OnHPBarEmptied);
-	}
-	if (IsValid(EnemyBar))
-	{
-		EnemyBar->OnHPBarEmptied.AddUObject(this, &AHealthManager::OnHPBarEmptied);
+		Bar->OnHPBarEmptied.AddUObject(this, &AHealthManager::OnHPBarEmptied);
 	}
 }
 
+//HPバーが空になった時の処理
 void AHealthManager::OnHPBarEmptied(UHitPointBar* EmptiedBar)
 {
+	//二重遷移防止
 	if (bIsGameFinished)
 	{
-		return;  //二重遷移防止
+		return;
 	}
 
 	bIsGameFinished = true;
 
 	if (!IsValid(GameJudge))
 	{
-		UE_LOG(LogTemp, Error, TEXT("GameJudge is null in AHealthManager::OnHPBarEmptied"));
+		UE_LOG(LogHealth, Error, TEXT("GameJudge is null in AHealthManager::OnHPBarEmptied"));
 		return;
 	}
 
-	if (EmptiedBar == HitPointBar[ECharacterType::Player])
+	if (EmptiedBar == HitPointBars[ToIndex(ECharacterType::Player)].Get())
 	{
 		GameJudge->GameOver();
 	}
-	else if (EmptiedBar == HitPointBar[ECharacterType::Enemy])
+	else if (EmptiedBar == HitPointBars[ToIndex(ECharacterType::Enemy)].Get())
 	{
 		GameJudge->GameClear();
 	}
 }
 
-//HP参照関数
-float AHealthManager::GetHealth(ECharacterType CurrentCharactorType)const
+//現在のHPを取得する
+float AHealthManager::GetHealth(ECharacterType Target) const
 {
-	return CurrentHealth[static_cast<int32>(CurrentCharactorType)];
+	const int32 Index = ToIndex(Target);
+
+	if (!CurrentHealth.IsValidIndex(Index))
+	{
+		return 0.0f;
+	}
+
+	return CurrentHealth[Index];
 }

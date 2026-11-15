@@ -1,201 +1,226 @@
-
 #include "Throwable/ThrowableObject.h"
 #include "Components/SphereComponent.h"
 #include "Throwable/ThrowableObjectData.h"
 #include "Throwable/ThrowableManager.h"
 #include "Player/PlayerPawn.h"
 #include "Enemy/EnemyActor.h"
-#include "Health/HealthManager.h"
-#include "Player/PlayerLevelManager.h"
+
+namespace
+{
+	//当たり判定の初期半径
+	constexpr float DefaultCollisionRadius = 150.0f;
+	//投擲オブジェクトが使うコリジョンプロファイル名
+	const FName ThrowableCollisionProfile(TEXT("OverlapAllDynamic"));
+}
 
 AThrowableObject::AThrowableObject()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = false;
 
-    //SphereCollisionを生成してルートにする
-    SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
-    SetRootComponent(SphereCollision);
-    SphereCollision->InitSphereRadius(150.0f);
-    SphereCollision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+	//SphereCollisionを生成してルートにする
+	SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
+	SetRootComponent(SphereCollision);
+	SphereCollision->InitSphereRadius(DefaultCollisionRadius);
+	SphereCollision->SetCollisionProfileName(ThrowableCollisionProfile);
 }
 
 void AThrowableObject::BeginPlay()
 {
 	Super::BeginPlay();
 
-    //SphereCollisionの中にデータがあれば{}内を実行する
-    if (IsValid(SphereCollision))
-    {
-        //オーバーラップ開始時にOnOverlap関数を呼ぶように設定
-        SphereCollision->OnComponentBeginOverlap.AddDynamic(
-            this,
-            &AThrowableObject::OnOverlap
-        );
-    }
+	SphereCollision->OnComponentBeginOverlap.AddDynamic(this, &AThrowableObject::OnOverlap);
 
-    CurrentState = EThrowableState::Pickable;
-    BaseScale = GetActorScale3D();
+	CurrentState = EThrowableState::Pickable;
+	BaseScale = GetActorScale3D();
 }
 
 void AThrowableObject::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-    UpdateThrownMovement(DeltaTime);
-    UpdateHeldRotation(DeltaTime);
+	UpdateThrownMovement(DeltaTime);
+	UpdateHeldRotation(DeltaTime);
 }
 
-//持たれているときの処理
+//生成時にマネージャーを注入する
+void AThrowableObject::SetThrowableManager(AThrowableManager* InManager)
+{
+	ThrowableManager = InManager;
+}
+
+//持たれた時の処理
 void AThrowableObject::OnPickedUp(AActor* Holder)
 {
-    if (!IsValid(Holder))
-    {
-        return;
-    }
-
-	if (!IsValid(ThrowableManager))
+	if (CurrentState != EThrowableState::Pickable || !IsValid(Holder))
 	{
-		UE_LOG(LogTemp, Error, TEXT("ThrowableManager is null in AThrowableObject::OnPickedUp"));
+		return;
+	}
+
+	CurrentState = EThrowableState::Held;
+	HolderPawn = Cast<APlayerPawn>(Holder);
+	SetActorTickEnabled(true);
+
+	//プレイヤーにアタッチ
+	AttachToActor(Holder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	SetActorRelativeRotation(FRotator::ZeroRotator);
+	UpdateHeldLocation();
+}
+
+//回収数に合わせて持っている間のスケールを更新する
+void AThrowableObject::UpdateHeldScale(int32 CollectedCount)
+{
+	if (CurrentState != EThrowableState::Held)
+	{
 		return;
 	}
 
 	if (!IsValid(ThrowableData))
 	{
-		UE_LOG(LogTemp, Error, TEXT("ThrowableData is null in AThrowableObject::OnPickedUp"));
+		UE_LOG(LogThrowable, Error, TEXT("ThrowableData is null in AThrowableObject::UpdateHeldScale"));
 		return;
 	}
 
-	if (CurrentState == EThrowableState::Held)
-	{
-		//スケールを調整する
-        const float Multiplier = FMath::Min(1.0f + ThrowableManager->GetCollectedCount() * ThrowableData->ScalePerItem, ThrowableData->MaxScale);
-        SetActorScale3D(BaseScale * Multiplier);
-        UpdateHeldLocation();
-		return;
-	}
+	//サイズを大きくする
+	const int32 ExtraCount = FMath::Max(CollectedCount - 1, 0);
+	const float Multiplier = FMath::Min(1.0f + ExtraCount * ThrowableData->ScalePerItem, ThrowableData->MaxScale);
 
-    CurrentState = EThrowableState::Held;
-
-    //プレイヤーにアタッチ
-    AttachToActor(Holder, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-    SetActorRelativeRotation(FRotator::ZeroRotator);
-    UpdateHeldLocation();
+	SetActorScale3D(BaseScale * Multiplier);
+	UpdateHeldLocation();
 }
 
 //投げられた時の処理
-void AThrowableObject::OnThrown(const FVector& Direction)
+void AThrowableObject::OnThrown(const FVector& Direction, int32 StackCount)
 {
-    //アタッチを外す(今のワールド位置を維持)
-    DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	if (CurrentState != EThrowableState::Held)
+	{
+		return;
+	}
 
-    CurrentState = EThrowableState::Thrown;
-    SphereCollision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-    SetActorEnableCollision(true);
+	//アタッチを外す
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
-    CurrentDirection = Direction;
-    ThrowStartLocation = GetActorLocation();
+	CurrentState = EThrowableState::Thrown;
+	HolderPawn.Reset();
+
+	CurrentDirection = Direction.GetSafeNormal();
+	ThrowStackCount = StackCount;
+	ThrowStartLocation = GetActorLocation();
 }
 
 //持たれている間の回転処理
 void AThrowableObject::UpdateHeldRotation(float DeltaTime)
 {
-    if (CurrentState != EThrowableState::Held || !IsValid(PlayerPawn))
-    {
-        return;
-    }
+	if (CurrentState != EThrowableState::Held || !HolderPawn.IsValid() || !IsValid(ThrowableData))
+	{
+		return;
+	}
 
-    //プレイヤーが移動中のときだけ回転する
-    if (!PlayerPawn->GetIsMoving())
-    {
-        return;
-    }
+	//プレイヤーが移動中のときだけ回転する
+	if (!HolderPawn->GetIsMoving())
+	{
+		return;
+	}
 
-    //プレイヤー基準のローカル回転として加算する
-    AddActorLocalRotation(ThrowableData->RotateSpeed * DeltaTime);
+	//回転させる
+	AddActorLocalRotation(ThrowableData->RotateSpeed * DeltaTime);
 }
 
+//アイテムの大きさに合わせて持つ位置を更新する
 void AThrowableObject::UpdateHeldLocation()
 {
-    if (!IsValid(PlayerPawn) || !IsValid(SphereCollision))
-    {
-        return;
-    }
+	if (!HolderPawn.IsValid() || !IsValid(ThrowableData))
+	{
+		return;
+	}
 
-    //プレイヤーのカプセルサイズを取得
-    float PlayerRadius = 0.0f;
-    float PlayerHalfHeight = 0.0f;
-    PlayerPawn->GetSimpleCollisionCylinder(PlayerRadius, PlayerHalfHeight);
+	//プレイヤーのカプセルサイズを取得
+	float PlayerRadius = 0.0f;
+	float PlayerHalfHeight = 0.0f;
+	HolderPawn->GetSimpleCollisionCylinder(PlayerRadius, PlayerHalfHeight);
 
-    //オブジェクトの半径
-    const float ItemRadius = SphereCollision->GetScaledSphereRadius();
+	//オブジェクトの半径
+	const float ItemRadius = SphereCollision->GetScaledSphereRadius();
 
-    FVector NewOffset = ThrowableData->Offset;
+	//埋まらないように前方向と下方向のオフセットを調整する
+	FVector NewOffset = ThrowableData->Offset;
+	NewOffset.X = FMath::Max(ThrowableData->Offset.X, PlayerRadius + ItemRadius);
+	NewOffset.Z = FMath::Max(ThrowableData->Offset.Z, -PlayerHalfHeight + ItemRadius);
 
-	//オブジェクトが埋まらないように前方向と下方向のオフセットを調整する
-    NewOffset.X = FMath::Max(ThrowableData->Offset.X, PlayerRadius + ItemRadius);
-    NewOffset.Z = FMath::Max(ThrowableData->Offset.Z, -PlayerHalfHeight + ItemRadius);
-
-    SetActorRelativeLocation(NewOffset);
+	SetActorRelativeLocation(NewOffset);
 }
 
 //投げられて指定方向に飛んでいく処理
 void AThrowableObject::UpdateThrownMovement(float DeltaTime)
 {
-    if (CurrentState != EThrowableState::Thrown)
-    {
-        return;
-    }
-
-	if (!IsValid(ThrowableData))
+	if (CurrentState != EThrowableState::Thrown)
 	{
-		UE_LOG(LogTemp, Error, TEXT("ThrowableData is null in AThrowableObject::UpdateThrownMovement"));
 		return;
 	}
 
-	//指定方向に移動する
-    const FVector Delta = CurrentDirection * ThrowableData->MoveSpeed * DeltaTime;
-    AddActorWorldOffset(Delta, true);
+	if (!IsValid(ThrowableData))
+	{
+		UE_LOG(LogThrowable, Error, TEXT("ThrowableData is null in AThrowableObject::UpdateThrownMovement"));
+		return;
+	}
+
+	//移動させる
+	const FVector Delta = CurrentDirection * ThrowableData->MoveSpeed * DeltaTime;
+	AddActorWorldOffset(Delta, false);
 
 	//飛距離がMaxThrowDistanceを超えたら消す
-    if (FVector::Dist(ThrowStartLocation, GetActorLocation()) >= ThrowableData->MaxThrowDistance)
-    {
-        Destroy();
-    }
+	if (FVector::Dist(ThrowStartLocation, GetActorLocation()) >= ThrowableData->MaxThrowDistance)
+	{
+		Destroy();
+	}
 }
 
 //他のアクタと重なった時に呼ばれる
 void AThrowableObject::OnOverlap(
-    UPrimitiveComponent* OverlappedComp,
-    AActor* OtherActor,
-    UPrimitiveComponent* OtherComp,
-    int32 OtherBodyIndex,
-    bool bFromSweep,
-    const FHitResult& SweepResult
+	UPrimitiveComponent* OverlappedComp,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult
 )
 {
-	//プレイヤーもしくは持たれているオブジェクトと重なった場合に拾う処理を行う
-    if (CurrentState == EThrowableState::Pickable && !bIsCollected && IsValid(ThrowableManager))
-    {
-		const APlayerPawn* OtherPlayer = Cast<APlayerPawn>(OtherActor);
-        const AThrowableObject* OtherItem = Cast<AThrowableObject>(OtherActor);
+	if (!IsValid(OtherActor))
+	{
+		return;
+	}
 
-        if (OtherPlayer || (OtherItem && OtherItem->IsHeld()))
-        {
-            if (ThrowableManager->PickUp(this))
-            {
-                bIsCollected = true;
-            }
-            return;
-        }
-    }
+	//プレイヤーもしくは持たれているオブジェクトと重なったら拾われる
+	if (CurrentState == EThrowableState::Pickable)
+	{
+		const AThrowableObject* OtherItem = Cast<AThrowableObject>(OtherActor);
+		const bool bIsPickerOverlapped = OtherActor->IsA<APlayerPawn>() || (IsValid(OtherItem) && OtherItem->IsHeld());
 
-	//投げられたオブジェクトが敵と重なった場合にダメージを与える処理を行う
-    if (CurrentState == EThrowableState::Thrown && Cast<AEnemyActor>(OtherActor) 
-        && IsValid(HealthManager) && IsValid(PlayerLevelManager))
-    {
-        HealthManager->TakeDamage(ECharacterType::Enemy);
-        PlayerLevelManager->AddExp();
-        Destroy();
-        return;
-    }
+		if (!bIsPickerOverlapped)
+		{
+			return;
+		}
+
+		if (!IsValid(ThrowableManager))
+		{
+			UE_LOG(LogThrowable, Error, TEXT("ThrowableManager is null in AThrowableObject::OnOverlap"));
+			return;
+		}
+
+		ThrowableManager->PickUp(this);
+		return;
+	}
+
+	//投げられている間に敵と重なったら当たったことを通知して消える
+	if (CurrentState == EThrowableState::Thrown && OtherActor->IsA<AEnemyActor>())
+	{
+		if (IsValid(ThrowableManager))
+		{
+			ThrowableManager->NotifyHitEnemy(ThrowStackCount);
+		}
+
+		//同じフレームに複数回当たらないようにする
+		SetActorEnableCollision(false);
+		Destroy();
+	}
 }

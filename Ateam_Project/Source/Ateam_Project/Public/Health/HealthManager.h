@@ -1,9 +1,11 @@
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Health/CharacterType.h"
 #include "HealthManager.generated.h"
+
+DECLARE_LOG_CATEGORY_EXTERN(LogHealth, Log, All);
 
 class UHitPointBar;
 class AGameJudge;
@@ -12,74 +14,70 @@ class UEnemyDamageData;
 class UHealthData;
 class AThrowableManager;
 
-enum ECharacterType 
-{
-	Player = 0,
-	Enemy = 1,
-};
-
+//ダメージを受けた時に通知するデリゲート
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnDamaged, ECharacterType);
 
-/*
-* HP管理クラス
-*/
+/**
+ * HP管理クラス。
+ */
 UCLASS()
 class ATEAM_PROJECT_API AHealthManager : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
 
+public:
 	AHealthManager();
-
-protected:
-
-	virtual void BeginPlay() override;
-
-public:	
-	//ダメージ分HPを減らす関数
-	void TakeDamage(ECharacterType CurrentCharactorType);
-	//初期化処理
+	//指定したキャラクターに指定した量のダメージを与える
+	void ApplyDamage(ECharacterType Target, float DamageAmount);
+	//敵の攻撃でプレイヤーにダメージを与える
+	void TakeDamage(ECharacterType Target);
+	//HPバー設定
 	void InitializeHealth(UHitPointBar* PlayerBar, UHitPointBar* EnemyBar);
-	//HP参照関数
-	float GetHealth(ECharacterType CurrentCharactorType)const;
-
+	//現在のHPを取得する
+	float GetHealth(ECharacterType Target) const;
 	//ダメージを受けた時に呼ばれるデリゲート
 	FOnDamaged OnDamaged;
 
-private:
+protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+private:
+	//HPの配列を初期化する
+	void EnsureInitialized();
+	//HPバーを関連付けて、空になった通知を受け取る
+	void BindHitPointBar(ECharacterType Target, UHitPointBar* Bar);
+	//投擲オブジェクトが敵に当たった時に呼ばれる
+	void HandleThrowableHitEnemy(int32 StackCount);
+	//HPバーが空になった時に呼ばれる
 	void OnHPBarEmptied(UHitPointBar* EmptiedBar);
 
 protected:
 	//プレイヤーの攻撃力を管理するデータアセット
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|PlayerDamage")
 	TObjectPtr<UPlayerDamageData> PlayerDamageData = nullptr;
-
 	//敵の攻撃力を管理するデータアセット
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|EnemyDamage")
 	TObjectPtr<UEnemyDamageData> EnemyDamageData = nullptr;
-
 	//HPを管理するデータアセット
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|Health")
 	TObjectPtr<UHealthData> HealthData = nullptr;
-
 	//ゲームの勝敗を判定するクラス
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HealthManager|GameJudge")
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|GameJudge")
 	TObjectPtr<AGameJudge> GameJudge = nullptr;
-
-	//拾ったオブジェクトを管理するマネージャー
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HealthManager|Throwable")
+	//敵に当たった通知を受け取るマネージャー
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|Throwable")
 	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
 
 private:
-	//現在のHPを保存する変数
-	TArray<float> CurrentHealth = {0,0};
-	TArray<float> TotalDamage = { 0,0 };
-	TArray<float> MaxHealth = { 0,0 };
-	TArray<TObjectPtr<UHitPointBar>> HitPointBar = {nullptr,nullptr};
-
+	//現在のHP
+	TArray<float> CurrentHealth = {};
+	//最大HP
+	TArray<float> MaxHealth = {};
+	//HPバー
+	TArray<TWeakObjectPtr<UHitPointBar>> HitPointBars = {};
+	//初期化済みかどうか
+	bool bIsInitialized = false;
+	//ゲーム終了の判定が済んだかどうか
 	bool bIsGameFinished = false;
-
-	int32 CollectedCount = 0;
 };

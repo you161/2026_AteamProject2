@@ -1,41 +1,34 @@
-
 #include "Throwable/ThrowableManager.h"
 #include "Throwable/ThrowableObject.h"
 #include "Input/InputManager.h"
 #include "Input/InputReceiver.h"
 #include "Player/PlayerDamageData.h"
 
+DEFINE_LOG_CATEGORY(LogThrowable);
+
 AThrowableManager::AThrowableManager()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 }
 
-void AThrowableManager::BeginPlay() 
+void AThrowableManager::BeginPlay()
 {
 	Super::BeginPlay();
 
 	InitializeInputManager();
 }
 
-void AThrowableManager::Tick(float DeltaTime)
+void AThrowableManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::Tick(DeltaTime);
-
-	if (!IsValid(InputManager))
+	if (IsValid(InputManager))
 	{
-		return;
+		InputManager->OnInteract.RemoveAll(this);
 	}
 
-	if (InputManager->ConsumeInteract()) {
-
-		if (IsValid(HeldItem))
-		{
-			Throw();
-		}
-	}
+	Super::EndPlay(EndPlayReason);
 }
 
-//現在持っているアイテムを設定する
+//アイテムを拾えたらtrueを返す
 bool AThrowableManager::PickUp(AThrowableObject* Target)
 {
 	if (!IsValid(Target))
@@ -43,47 +36,82 @@ bool AThrowableManager::PickUp(AThrowableObject* Target)
 		return false;
 	}
 
-	if (!IsValid(PlayerDamageData))
+	if (!IsValid(PlayerDamageData) || !IsValid(Player))
 	{
-		UE_LOG(LogTemp, Error, TEXT("DamageAmountData is null in AThrowableManager::PickUp"));
+		UE_LOG(LogThrowable, Error, TEXT("PlayerDamageData or Player is null in AThrowableManager::PickUp"));
 		return false;
 	}
 
-	if (CollectedCount >= PlayerDamageData->PlayerAttackDamage.Num() - 1)
+	//所持上限
+	const int32 MaxCollectCount = FMath::Max(0, PlayerDamageData->PlayerAttackDamage.Num() - 1);
+
+	if (CollectedCount >= MaxCollectCount)
 	{
-		//上限なので拾わない
 		return false;
 	}
 
 	if (!IsValid(HeldItem))
 	{
 		HeldItem = Target;
-		CollectedCount++;
 		HeldItem->OnPickedUp(Player);
 	}
 	else
 	{
-		CollectedCount++;
-		HeldItem->OnPickedUp(Player);
 		Target->Destroy();
 	}
+
+	++CollectedCount;
+	HeldItem->UpdateHeldScale(CollectedCount);
 	return true;
 }
 
-//アイテムを投げる処理
-void AThrowableManager::Throw()
+//投げたアイテムが敵に当たったことを通知する
+void AThrowableManager::NotifyHitEnemy(int32 StackCount)
 {
-	ThrownCount = CollectedCount;
-	HeldItem->OnThrown(Player->GetActorForwardVector());
-	HeldItem = nullptr;
-	CollectedCount = 0;
+	OnHitEnemy.Broadcast(StackCount);
 }
 
-//InputManagerを初期化する関数
+//InputManagerを取得して投擲入力を購読する
 void AThrowableManager::InitializeInputManager()
 {
-	if (AInputReceiver* InputReceiver = Cast<AInputReceiver>(GetWorld()->GetFirstPlayerController()))
+	AInputReceiver* InputReceiver = Cast<AInputReceiver>(GetWorld()->GetFirstPlayerController());
+
+	if (!IsValid(InputReceiver))
 	{
-		InputManager = InputReceiver->GetInputManager();
+		UE_LOG(LogThrowable, Error, TEXT("InputReceiver is not found in AThrowableManager::InitializeInputManager"));
+		return;
 	}
+
+	InputManager = InputReceiver->GetInputManager();
+
+	if (!IsValid(InputManager))
+	{
+		UE_LOG(LogThrowable, Error, TEXT("InputManager is null in AThrowableManager::InitializeInputManager"));
+		return;
+	}
+
+	InputManager->OnInteract.AddUObject(this, &AThrowableManager::HandleInteract);
+}
+
+//投擲入力が来た時の処理
+void AThrowableManager::HandleInteract()
+{
+	if (IsValid(HeldItem))
+	{
+		Throw();
+	}
+}
+
+//持っているアイテムを投げる
+void AThrowableManager::Throw()
+{
+	if (!IsValid(HeldItem) || !IsValid(Player))
+	{
+		return;
+	}
+
+	//投げた時の個数はアイテム自身に持たせる
+	HeldItem->OnThrown(Player->GetActorForwardVector(), CollectedCount);
+	HeldItem = nullptr;
+	CollectedCount = 0;
 }

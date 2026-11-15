@@ -209,7 +209,7 @@ void AInputReceiver::LookGamepad(const FInputActionValue& Value)
 //インタラクション入力をInputManagerに渡す関数
 void AInputReceiver::Interact()
 {
-	InputManager->SetIsInteracting(true);
+	InputManager->NotifyInteract();
 }
 
 //ダッシュ入力をInputManagerに渡す関数

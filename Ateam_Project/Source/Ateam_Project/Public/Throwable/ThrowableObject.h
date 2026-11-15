@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,27 +8,36 @@
 class USphereComponent;
 class UThrowableObjectData;
 class AThrowableManager;
-class AHealthManager;
 class APlayerPawn;
-class APlayerLevelManager;
 
 /**
- *投げることができるアイテム
+ * 投げることができるアイテム。
  */
 UCLASS()
 class ATEAM_PROJECT_API AThrowableObject : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
 
+public:
 	AThrowableObject();
 
-protected:
+	virtual void Tick(float DeltaTime) override;
 
+	//生成時にマネージャーを注入する
+	void SetThrowableManager(AThrowableManager* InManager);
+	//持たれた時の処理
+	void OnPickedUp(AActor* Holder);
+	//回収数に合わせて持っている間のスケールを更新する
+	void UpdateHeldScale(int32 CollectedCount);
+	//投げられた時の処理
+	void OnThrown(const FVector& Direction, int32 StackCount);
+	//持たれている状態かどうかを返す
+	bool IsHeld() const { return CurrentState == EThrowableState::Held; }
+
+protected:
 	virtual void BeginPlay() override;
 
-	//他のActorと重なった時に呼ばれる関数
+	//他のActorと重なった時に呼ばれる
 	UFUNCTION()
 	void OnOverlap(
 		UPrimitiveComponent* OverlappedComp,
@@ -40,16 +48,6 @@ protected:
 		const FHitResult& SweepResult
 	);
 
-public:	
-
-	virtual void Tick(float DeltaTime) override;
-	//持たれた時の関数
-	void OnPickedUp(AActor* Holder);
-	//投げられた時の関数
-	void OnThrown(const FVector& Direction);
-	//現在の状態を取得する関数
-	bool IsHeld() const { return CurrentState == EThrowableState::Held; }
-
 private:
 	//指定方向に飛んでいく処理
 	void UpdateThrownMovement(float DeltaTime);
@@ -59,34 +57,27 @@ private:
 	void UpdateHeldLocation();
 
 protected:
-	//当たり判定用
+	//当たり判定
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
 	TObjectPtr<USphereComponent> SphereCollision = nullptr;
-	//投げれるオブジェクトを管理するマネージャー
+	//投げれるオブジェクトを管理しているアクタ
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableObject|ThrowableManager")
 	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
-	//HP
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableObject|HealthManager")
-	TObjectPtr<AHealthManager> HealthManager = nullptr;
-	//プレイヤー
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "ThrowableObject|PlayerPawn")
-	TObjectPtr<APlayerPawn> PlayerPawn = nullptr;
 	//投げれるオブジェクトのデータ
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ThrowableObject|Data")
 	TObjectPtr<UThrowableObjectData> ThrowableData = nullptr;
-	//投げれるオブジェクトのデータ
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ThrowableObject|PlayerLevelManager")
-	TObjectPtr<APlayerLevelManager> PlayerLevelManager = nullptr;
 
 private:
-	//現在の状態を管理するステート
+	//現在の状態
 	EThrowableState CurrentState = EThrowableState::Pickable;
-	//飛んでいく方向を保存する変数
+	//持っているプレイヤー
+	TWeakObjectPtr<APlayerPawn> HolderPawn = nullptr;
+	//飛んでいく方向
 	FVector CurrentDirection = FVector::ZeroVector;
-	//投げ始めの座標を保存する変数
+	//投げ始めの座標
 	FVector ThrowStartLocation = FVector::ZeroVector;
-	//投げられた時のスケールを保存する変数
-	FVector BaseScale = FVector::ZeroVector;
-	//回収されたかどうかのフラグ
-	bool bIsCollected = false;
+	//生成時のスケール
+	FVector BaseScale = FVector::OneVector;
+	//投げられた時の個数
+	int32 ThrowStackCount = 0;
 };

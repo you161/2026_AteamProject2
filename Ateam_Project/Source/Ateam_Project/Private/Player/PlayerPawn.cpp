@@ -6,7 +6,22 @@
 #include "Throwable/ThrowableManager.h"
 #include "Player/PlayerLevelManager.h"
 #include "Player/StaminaManager.h"
+#include "Health/HealthManager.h"
 #include "Component/DamageFlashComponent.h"
+
+DEFINE_LOG_CATEGORY(LogPlayerPawn);
+
+namespace
+{
+	//カプセルの初期半径
+	constexpr float DefaultCapsuleRadius = 34.0f;
+	//カプセルの初期の半分の高さ
+	constexpr float DefaultCapsuleHalfHeight = 88.0f;
+	//ダッシュしていないときの速度倍率
+	constexpr float NormalSpeedRate = 1.0f;
+	//コリジョンプロファイル名
+	const FName PlayerCollisionProfile(TEXT("Pawn"));
+}
 
 APlayerPawn::APlayerPawn()
 {
@@ -15,8 +30,8 @@ APlayerPawn::APlayerPawn()
 	//CapsuleCollisionを生成してルートにする
 	CapsuleCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollision"));
 	SetRootComponent(CapsuleCollision);
-	CapsuleCollision->InitCapsuleSize(34.0f, 88.0f);
-	CapsuleCollision->SetCollisionProfileName(TEXT("Pawn"));
+	CapsuleCollision->InitCapsuleSize(DefaultCapsuleRadius, DefaultCapsuleHalfHeight);
+	CapsuleCollision->SetCollisionProfileName(PlayerCollisionProfile);
 }
 
 void APlayerPawn::BeginPlay()
@@ -37,210 +52,7 @@ void APlayerPawn::BeginPlay()
 		HealthManager->OnDamaged.AddUObject(this, &APlayerPawn::OnDamaged);
 	}
 
-	if (!IsValid(InputManager))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("InputManager is not set in PlayerPawn."));
-		return;
-	}
-
-	if (IsValid(Camera))
-	{
-		CurrentCameraForward = Camera->GetActorForwardVector();
-		CurrentCameraRight = Camera->GetActorRightVector();
-	}
-	else
-	{
-		UE_LOG(LogTemp,Error,TEXT("Camera is not set in PlayerPawn."));
-	}
-
-	if (!IsValid(PlayerData))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerData is not set in PlayerPawn."));
-		return;
-	}
-
-	if (!IsValid(ThrowableManager))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ThrowableManager is not set in PlayerPawn."));
-		return;
-	}
-
-	if (!IsValid(PlayerLevelManager))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerLevelManager is not set in PlayerPawn."));
-		return;
-	}
-
-	if (!IsValid(StaminaManager))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("StaminaManager is not set in PlayerPawn."));
-		return;
-	}
-}
-
-void APlayerPawn::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	//Possess前や必要な設定がない間は何もしない
-	if (!IsValid(InputManager)	   ||
-		!IsValid(PlayerData)	   ||
-		!IsValid(Camera)		   ||
-		!IsValid(ThrowableManager) || 
-		!IsValid(PlayerLevelManager) ||
-		!IsValid(StaminaManager))
-	{
-		return;
-	}
-
-	Move(DeltaTime);
-	Rotate(DeltaTime);
-}
-
-//移動処理
-void APlayerPawn::Move(float DeltaTime)
-{
-	const FVector2D MoveInput = InputManager->GetMoveInput();
-
-	if (!IsValid(Camera))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Camera is not set in PlayerPawn."));
-		return;
-	}
-
-	CurrentCameraForward = Camera->GetActorForwardVector();
-	CurrentCameraRight = Camera->GetActorRightVector();
-
-	CurrentCameraForward.Z = 0.0f;
-	CurrentCameraRight.Z = 0.0f;
-
-	CurrentCameraForward.Normalize();
-	CurrentCameraRight.Normalize();
-
-	//入力をカメラの向き基準のワールド方向に変換
-	CurrentDirection = (CurrentCameraForward * MoveInput.Y + CurrentCameraRight * MoveInput.X).GetSafeNormal();
-	//移動速度のデータを取得する
-	const TArray<FMoveSpeed>& Table = PlayerData->MoveSpeedTable;
-
-	if (Table.Num() == 0)
-	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerData->MoveSpeedTable is empty"));
-		return;
-	}
-
-	//現在のレベルを取得する
-	const int CurrentLevel = FMath::Clamp(PlayerLevelManager->GetLevel(), 0, Table.Num() - 1);
-	//現在のレベルに対応する移動速度の行を取得する
-	const TArray<float>& Row = Table[CurrentLevel].Values;
-
-	if (Row.Num() == 0)
-	{
-		UE_LOG(LogTemp, Error, TEXT("MoveSpeedTable[%d] is empty"), CurrentLevel);
-		return;
-	}
-
-	//集めた個数を取得して、移動速度を決定する
-	const int32 Index = FMath::Clamp(ThrowableManager->GetCollectedCount(), 0, Row.Num() - 1);
-	//ダッシュ中は速度倍率を適用する
-	const bool bIsDashing = InputManager->GetIsDashing() &&
-							!CurrentDirection.IsNearlyZero() && 
-							StaminaManager->GetCanSprint();
-
-	StaminaManager->SetIsSprinting(bIsDashing);
-
-	const float DashRate = bIsDashing ? PlayerData->DashSpeedRate : 1.0f;
-	const FVector Delta = CurrentDirection * Row[Index] * DashRate * DeltaTime;
-
-	if (!Delta.IsNearlyZero())
-	{
-		FHitResult Hit;
-		AddActorWorldOffset(Delta, true, &Hit);
-
-		//衝突が発生した場合、スライド移動を行う
-		if (Hit.IsValidBlockingHit())
-		{
-			//スライド移動の計算
-			FVector Slide = FVector::VectorPlaneProject(Delta, Hit.Normal) * (1.0f - Hit.Time);
-			Slide.Z = 0.0f;
-			AddActorWorldOffset(Slide, true);
-		}
-
-		bIsMoving = true;
-	}
-	else
-	{
-		bIsMoving = false;
-	}
-}
-
-//回転処理
-void APlayerPawn::Rotate(float DeltaTime)
-{
-	//移動入力がない場合は回転しない
-	if (CurrentDirection.IsNearlyZero())
-	{
-		return;
-	}
-
-	//水平方向だけを回転に使用する
-	FVector Direction(CurrentDirection.X, CurrentDirection.Y, 0.0f);
-
-	if (Direction.IsNearlyZero())
-	{
-		return;
-	}
-
-	Direction.Normalize();
-
-	//移動方向から目標回転を求める
-	const FRotator TargetRotation = Direction.Rotation();
-
-	//現在の回転を取得する
-	const FRotator CurrentRotation = GetActorRotation();
-
-	//一定の角速度で目標方向へ回転する
-	const FRotator NewRotation = FMath::RInterpConstantTo(
-		CurrentRotation,
-		TargetRotation,
-		DeltaTime,
-		PlayerData->RotateSpeed
-	);
-
-	SetActorRotation(NewRotation);
-}
-
-//PossessedByは、コントローラーがポーンを制御する際に呼び出される関数
-void APlayerPawn::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-
-	InitializeInputManager();
-}
-
-//UnPossessedは、コントローラーがポーンの制御を手放す際に呼び出される関数
-void APlayerPawn::UnPossessed()
-{
-	Super::UnPossessed();
-
-	//古いコントローラーのInputManagerを参照し続けないようにする
-	InputManager = nullptr;
-	CurrentDirection = FVector::ZeroVector;
-}
-
-//InputManagerを初期化する関数
-void APlayerPawn::InitializeInputManager()
-{
-	AController* CurrentController = GetController();
-
-	AInputReceiver* InputReceiver = Cast<AInputReceiver>(CurrentController);
-
-	if (!IsValid(InputReceiver))
-	{
-		UE_LOG(LogTemp,Warning,TEXT("[PlayerPawn] InputReceiver is invalid."));
-		return;
-	}
-
-	InputManager = InputReceiver->GetInputManager();
+	ValidateReferences();
 }
 
 void APlayerPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -252,6 +64,209 @@ void APlayerPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void APlayerPawn::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	//Possess前や必要な設定がない間は何もしない
+	if (!HasRequiredReferences())
+	{
+		return;
+	}
+
+	Move(DeltaTime);
+	Rotate(DeltaTime);
+}
+
+//必要な参照が設定されているか確認してログに出す
+void APlayerPawn::ValidateReferences() const
+{
+	if (!IsValid(PlayerData))
+	{
+		UE_LOG(LogPlayerPawn, Warning, TEXT("PlayerData is not set in PlayerPawn."));
+	}
+	else
+	{
+		//速度テーブルは毎フレーム確認するとログが溢れるので、ここで一度だけ確認する
+		if (PlayerData->MoveSpeedTable.IsEmpty())
+		{
+			UE_LOG(LogPlayerPawn, Error, TEXT("PlayerData->MoveSpeedTable is empty."));
+		}
+
+		for (int32 Index = 0; Index < PlayerData->MoveSpeedTable.Num(); ++Index)
+		{
+			if (PlayerData->MoveSpeedTable[Index].Values.IsEmpty())
+			{
+				UE_LOG(LogPlayerPawn, Error, TEXT("MoveSpeedTable[%d] is empty."), Index);
+			}
+		}
+	}
+
+	if (!IsValid(Camera))
+	{
+		UE_LOG(LogPlayerPawn, Error, TEXT("Camera is not set in PlayerPawn."));
+	}
+
+	if (!IsValid(ThrowableManager))
+	{
+		UE_LOG(LogPlayerPawn, Warning, TEXT("ThrowableManager is not set in PlayerPawn."));
+	}
+
+	if (!IsValid(PlayerLevelManager))
+	{
+		UE_LOG(LogPlayerPawn, Warning, TEXT("PlayerLevelManager is not set in PlayerPawn."));
+	}
+
+	if (!IsValid(StaminaManager))
+	{
+		UE_LOG(LogPlayerPawn, Warning, TEXT("StaminaManager is not set in PlayerPawn."));
+	}
+
+	if (!IsValid(HealthManager))
+	{
+		UE_LOG(LogPlayerPawn, Warning, TEXT("HealthManager is not set in PlayerPawn."));
+	}
+}
+
+//Tickで必要な参照がそろっているかを返す
+bool APlayerPawn::HasRequiredReferences() const
+{
+	return IsValid(InputManager)
+		&& IsValid(PlayerData)
+		&& IsValid(Camera)
+		&& IsValid(ThrowableManager)
+		&& IsValid(PlayerLevelManager)
+		&& IsValid(StaminaManager);
+}
+
+//移動処理
+void APlayerPawn::Move(float DeltaTime)
+{
+	UpdateMoveDirection(InputManager->GetMoveInput());
+
+	//ダッシュ中は速度倍率を適用する
+	const bool bIsDashing = InputManager->GetIsDashing()
+		&& !CurrentDirection.IsNearlyZero()
+		&& StaminaManager->GetCanSprint();
+
+	StaminaManager->SetIsSprinting(bIsDashing);
+
+	const float SpeedRate = bIsDashing ? PlayerData->DashSpeedRate : NormalSpeedRate;
+	const FVector Delta = CurrentDirection * GetMoveSpeed() * SpeedRate * DeltaTime;
+
+	bIsMoving = !Delta.IsNearlyZero();
+
+	if (bIsMoving)
+	{
+		MoveWithSlide(Delta);
+	}
+}
+
+//入力とカメラの向きから移動方向を更新する
+void APlayerPawn::UpdateMoveDirection(const FVector2D& MoveInput)
+{
+	//カメラの水平方向だけを使う
+	const FVector CameraForward = Camera->GetActorForwardVector().GetSafeNormal2D();
+	const FVector CameraRight = Camera->GetActorRightVector().GetSafeNormal2D();
+
+	//入力をカメラの向き基準のワールド方向に変換
+	CurrentDirection = (CameraForward * MoveInput.Y + CameraRight * MoveInput.X).GetSafeNormal();
+}
+
+//現在のレベルと所持数に応じた基本移動速度を返す
+float APlayerPawn::GetMoveSpeed() const
+{
+	const TArray<FMoveSpeed>& Table = PlayerData->MoveSpeedTable;
+
+	if (Table.IsEmpty())
+	{
+		return 0.0f;
+	}
+
+	//現在のレベルに対応する行を取得する
+	const int32 LevelIndex = FMath::Clamp(PlayerLevelManager->GetLevel(), 0, Table.Num() - 1);
+	const TArray<float>& Row = Table[LevelIndex].Values;
+
+	if (Row.IsEmpty())
+	{
+		return 0.0f;
+	}
+
+	//集めた個数で列を決める
+	const int32 CountIndex = FMath::Clamp(ThrowableManager->GetCollectedCount(), 0, Row.Num() - 1);
+	return Row[CountIndex];
+}
+
+//衝突したら壁に沿って滑るように移動する
+void APlayerPawn::MoveWithSlide(const FVector& Delta)
+{
+	FHitResult Hit;
+	AddActorWorldOffset(Delta, true, &Hit);
+
+	if (!Hit.IsValidBlockingHit())
+	{
+		return;
+	}
+
+	//壁に沿った方向へ残りの移動量だけ動く
+	FVector Slide = FVector::VectorPlaneProject(Delta, Hit.Normal) * (1.0f - Hit.Time);
+	Slide.Z = 0.0f;
+	AddActorWorldOffset(Slide, true);
+}
+
+//回転処理
+void APlayerPawn::Rotate(float DeltaTime)
+{
+	//移動入力がない場合は回転しない
+	if (CurrentDirection.IsNearlyZero())
+	{
+		return;
+	}
+
+	//一定の速度で移動方向へ回転する
+	const FRotator NewRotation = FMath::RInterpConstantTo(
+		GetActorRotation(),
+		CurrentDirection.Rotation(),
+		DeltaTime,
+		PlayerData->RotateSpeed
+	);
+
+	SetActorRotation(NewRotation);
+}
+
+//コントローラーがポーンを制御する際に呼ばれる
+void APlayerPawn::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	InitializeInputManager();
+}
+
+//コントローラーがポーンの制御を手放す際に呼ばれる
+void APlayerPawn::UnPossessed()
+{
+	Super::UnPossessed();
+
+	//古いコントローラーのInputManagerを参照し続けないようにする
+	InputManager = nullptr;
+	CurrentDirection = FVector::ZeroVector;
+	bIsMoving = false;
+}
+
+//InputManagerを初期化する関数
+void APlayerPawn::InitializeInputManager()
+{
+	AInputReceiver* InputReceiver = Cast<AInputReceiver>(GetController());
+
+	if (!IsValid(InputReceiver))
+	{
+		UE_LOG(LogPlayerPawn, Warning, TEXT("InputReceiver is invalid."));
+		return;
+	}
+
+	InputManager = InputReceiver->GetInputManager();
 }
 
 //ダメージを受けた時の処理
