@@ -66,14 +66,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|X = 本体との距離 Y = 攻撃との距離 Z = 高さの範囲")
 	FVector AttackDistance = FVector::Zero();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|敵の周りに生成するか")
-	bool bIsReady = false;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|個数")
 	int32 Count = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|生成までの時間")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|初めの生成までの時間")
 	float SpawnTime = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|次の生成までの時間")
+	float WiteTime = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "攻撃の設定")
 	TArray<FAttackState> AttackState = {};
