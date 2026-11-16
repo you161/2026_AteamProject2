@@ -36,7 +36,7 @@ void AStaminaManager::Sprint(float DeltaTime)
 	{
 		Stamina -= StaminaDrainRate * DeltaTime;
 
-		//消費している間は、回復待ち時間をリセットし続ける
+		//消費している間は回復待ち時間をリセットし続ける
 		RecoverDelayTimer = RecoverDelay;
 
 		if (Stamina <= 0.0f)
@@ -48,7 +48,7 @@ void AStaminaManager::Sprint(float DeltaTime)
 		return;
 	}
 
-	//ダッシュをやめた直後は、回復を始めずに待つ
+	//ダッシュをやめた直後は回復を始めずに待つ
 	if (RecoverDelayTimer > 0.0f)
 	{
 		RecoverDelayTimer -= DeltaTime;
@@ -61,7 +61,7 @@ void AStaminaManager::Sprint(float DeltaTime)
 		Stamina = FMath::Min(Stamina + StaminaRecoverRate * DeltaTime, MaxStamina);
 	}
 
-	//枯渇していた場合は、閾値まで回復したらダッシュ可能に戻す
+	//スタミナが0になっていた場合はマックスまで回復してからダッシュできるようにする
 	if (!bCanSprint && Stamina >= MaxStamina * ResumeSprintRatio)
 	{
 		bCanSprint = true;
