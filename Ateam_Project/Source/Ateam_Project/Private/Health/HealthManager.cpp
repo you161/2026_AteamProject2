@@ -38,6 +38,14 @@ void AHealthManager::BeginPlay()
 	}
 
 	ThrowableManager->OnHitEnemy.AddUObject(this, &AHealthManager::HandleThrowableHitEnemy);
+
+	if (!IsValid(EnemyManager))
+	{
+		UE_LOG(LogHealth, Error, TEXT("ThrowableManager is null in EnemyManager::BeginPlay"));
+		return;
+	}
+
+	EnemyManager->OnHitPlayer.AddUObject(this, &AHealthManager::HandleEnemyHitPlayer);
 }
 
 void AHealthManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -119,21 +127,18 @@ void AHealthManager::ApplyDamage(ECharacterType Target, float DamageAmount)
 }
 
 //敵の攻撃でプレイヤーにダメージを与える
-void AHealthManager::TakeDamage(ECharacterType Target)
+void AHealthManager::HandleEnemyHitPlayer(EEnemyAttackType AttackType)
 {
-	if (Target != ECharacterType::Player)
-	{
-		UE_LOG(LogHealth, Warning, TEXT("TakeDamage only supports ECharacterType::Player. Use ApplyDamage instead."));
-		return;
-	}
-
 	if (!IsValid(EnemyDamageData))
 	{
 		UE_LOG(LogHealth, Error, TEXT("EnemyDamageData is null in AHealthManager::TakeDamage"));
 		return;
 	}
 
-	ApplyDamage(ECharacterType::Player, EnemyDamageData->EnemyAttackDamage);
+	if (AttackType == EEnemyAttackType::Normal)
+	{
+		ApplyDamage(ECharacterType::Player, EnemyDamageData->EnemyAttackDamage);
+	}
 }
 
 //投擲オブジェクトが敵に当たった時の処理

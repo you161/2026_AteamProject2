@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Health/CharacterType.h"
+#include "Enemy/EnemyManager.h"
 #include "HealthManager.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogHealth, Log, All);
@@ -29,8 +30,6 @@ public:
 	AHealthManager();
 	//指定したキャラクターに指定した量のダメージを与える
 	void ApplyDamage(ECharacterType Target, float DamageAmount);
-	//敵の攻撃でプレイヤーにダメージを与える
-	void TakeDamage(ECharacterType Target);
 	//HPバー設定
 	void InitializeHealth(UHitPointBar* PlayerBar, UHitPointBar* EnemyBar);
 	//現在のHPを取得する
@@ -47,6 +46,8 @@ private:
 	void EnsureInitialized();
 	//HPバーを関連付けて、空になった通知を受け取る
 	void BindHitPointBar(ECharacterType Target, UHitPointBar* Bar);
+	//プレイヤーに敵の攻撃が当たったときに呼び出される
+	void HandleEnemyHitPlayer(EEnemyAttackType AttackType);
 	//投擲オブジェクトが敵に当たった時に呼ばれる
 	void HandleThrowableHitEnemy(int32 StackCount);
 	//HPバーが空になった時に呼ばれる
@@ -66,8 +67,11 @@ protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|GameJudge")
 	TObjectPtr<AGameJudge> GameJudge = nullptr;
 	//敵に当たった通知を受け取るマネージャー
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|Throwable")
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|ThrowableManager")
 	TObjectPtr<AThrowableManager> ThrowableManager = nullptr;
+	//プレイヤーに当たった通知を受け取るマネージャー
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "HealthManager|EnemeyManager")
+	TObjectPtr<AEnemyManager> EnemyManager = nullptr;
 
 private:
 	//現在のHP
