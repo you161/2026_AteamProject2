@@ -95,7 +95,8 @@ void APlayerPawn::ValidateReferences() const
 			UE_LOG(LogPlayerPawn, Error, TEXT("PlayerData->MoveSpeedTable is empty."));
 		}
 
-		for (int32 Index = 0; Index < PlayerData->MoveSpeedTable.Num(); ++Index)
+		//移動速度が設定されているか確認(レベルが1スタートのため1からループスタート)
+		for (int32 Index = 1; Index < PlayerData->MoveSpeedTable.Num(); ++Index)
 		{
 			if (PlayerData->MoveSpeedTable[Index].Values.IsEmpty())
 			{
