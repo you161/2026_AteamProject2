@@ -40,9 +40,6 @@ struct FSoundEntry
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     float Pitch = 1.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    bool bCanLoop = false;
 };
 
 UCLASS(BlueprintType)
