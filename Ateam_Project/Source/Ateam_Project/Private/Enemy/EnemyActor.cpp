@@ -3,6 +3,7 @@
 
 #include "Enemy/EnemyActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Components/BoxComponent.h"
 #include "Enemy/FallActor.h"
 #include "Enemy/EnemyData.h"
@@ -17,8 +18,13 @@ void AEnemyActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// アタッチされているか
 	SetObjects();
+
+	// 部位ごとの当たり判定を設定
 	SetBoxCollision();
+
+	// 移動するごとに初期化するもの
 	ResetAttack();
 }
 
@@ -26,9 +32,82 @@ void AEnemyActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// アタッチがされていなければ実行しない
 	if (bIsValid == false) return;
 
-	if (!bIsReady)
+	if (APlayerController* PC = Cast<APlayerController>(PlayerPawn->GetController()))
+	{
+		if (PC->WasInputKeyJustPressed(EKeys::P))
+		{
+			bIsMove = true;
+
+			for (ATurnMoveActor* Actor : TurnMoveArray)
+			{
+				if (IsValid(Actor))
+				{
+					Actor->Destroy();
+				}
+			}
+
+			TurnMoveArray.Reset();
+
+			if (GroundActor)
+			{
+				CenterLocation = GroundActor->GetActorLocation();
+				CenterLocation.Z = GetActorLocation().Z;
+
+				TargetLocation.X = GetActorLocation().Y;
+				TargetLocation.Y = GetActorLocation().X;
+				TargetLocation.Z = GetActorLocation().Z;
+
+				Radius = FVector::Dist2D(CenterLocation, GetActorLocation());
+
+				FVector CurrentLocation = GetActorLocation();
+				CurrentAngle = atan2(CurrentLocation.Y - CenterLocation.Y, CurrentLocation.X - CenterLocation.X);
+			}
+		}
+	}
+
+	if (bIsMove)
+	{
+		FVector CurrentLocation = GetActorLocation();
+
+		float DistanceToTarget = FVector::Dist2D(CurrentLocation, TargetLocation);
+
+		if (DistanceToTarget <= 25.0f)
+		{
+			bIsMove = false;
+			FVector Forward = CenterLocation - TargetLocation;
+			FRotator Rotator = Forward.GetSafeNormal().Rotation();
+			SetActorRotation(Rotator);
+			ResetAttack();
+		}
+		else
+		{
+			// 角度を時間経過とともに進める
+			CurrentAngle += AngleSpeed * DeltaTime;
+
+			// 新しい位置を計算
+			FVector NewLocation = GetActorLocation();
+			NewLocation.X = CenterLocation.X + Radius * cos(CurrentAngle);
+			NewLocation.Y = CenterLocation.Y + Radius * sin(CurrentAngle);
+
+			SetActorLocation(NewLocation, false, nullptr, ETeleportType::TeleportPhysics);
+
+			float FutureAngle = CurrentAngle + 0.01f;
+			FVector FutureLocation;
+			FutureLocation.X = CenterLocation.X + Radius * cos(FutureAngle);
+			FutureLocation.Y = CenterLocation.Y + Radius * sin(FutureAngle);
+			FutureLocation.Z = NewLocation.Z;
+
+			// 現在地から未来の位置へ向かう回転を計算して適用
+			FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(NewLocation, FutureLocation);
+			SetActorRotation(TargetRotation);
+		}
+	}
+
+	// 攻撃が生成されるまでの時間
+	if (!bIsReady && !bIsMove)
 	{
 		ReadyTime += DeltaTime;
 		if (ReadyTime > EnemyData->SpawnTime)
@@ -36,11 +115,15 @@ void AEnemyActor::Tick(float DeltaTime)
 			bIsReady = true;
 		}
 	}
-	else
+	// 攻撃が生成されたら
+	else if (bIsReady && !bIsMove)
 	{
+		// 攻撃を設定
 		SetAttackActor();
 
 		TotalTime += DeltaTime;
+
+		// 攻撃を呼び出す
 		SpawnAttackActor();
 	}
 }
@@ -141,6 +224,7 @@ void AEnemyActor::SetAttackActor()
 void AEnemyActor::ResetAttack()
 {
 	bIsReady = false;
+	bIsMove = false;
 	ReadyTime = 0.0f;
 	TotalTime = 0.0f;
 	AttackArray = EnemyData->AttackState;
