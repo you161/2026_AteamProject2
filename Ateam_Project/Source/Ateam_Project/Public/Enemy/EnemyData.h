@@ -28,6 +28,9 @@ struct FAttackState
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃の種類"))
 	EAttackSeed AttackSeed = EAttackSeed::RandomAttack;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃を上から落とすか"))
+	bool bIsFalling = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃アクタのサイズ"))
 	float ActorSize = 1.0f;
 
@@ -62,6 +65,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|X = 本体との距離 Y = 攻撃との距離 Z = 高さの範囲")
 	FVector AttackDistance = FVector::Zero();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|敵の周りに生成するか")
+	bool bIsReady = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "待機時の設定|個数")
 	int32 Count = 1.0f;
