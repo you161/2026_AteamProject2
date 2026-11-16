@@ -38,6 +38,7 @@ protected:
 	void SetObjects();
 	void SetBoxCollision();
 	void SetAttackActor();
+	void AdvanceTurnMove(TArray<FVector> TLocation);
 	void ResetAttack();
 	void SpawnAttackActor();
 
@@ -93,6 +94,8 @@ private:
 
 	TArray<FAttackState> AttackArray = {};
 	TArray<ATurnMoveActor*> TurnMoveArray = {};
+	int32 TurnMoveCount = 0;
+	int32 index = 0;
 
 	FRotator ActorRotator = FRotator(0.f, 0.f, 0.f);
 	float AttackActorSize = 0.0f;
@@ -104,15 +107,18 @@ private:
 
 	FVector CenterLocation = FVector::Zero();
 	FVector TargetLocation = FVector::Zero();
+	TArray<FVector> PrevLocation = {};
 	float Radius = 0.0f;
 	float CurrentAngle = 0.0f;
 	float MaxRarotation = 90.0f;
 	
 	float ReadyTime = 0.0f;
 	float TotalTime = 0.0f;
+	float RespawnTime = 0.0f;
 	bool bIsValid = false;
 	bool bIsReady = false;
 	bool bIsMove = false;
+	bool bIsRespawn = false;
 
 	//ダメージを受けたときに呼ばれる
 	void OnDamaged(ECharacterType DamagedType);

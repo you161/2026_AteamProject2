@@ -120,21 +120,33 @@ void AEnemyActor::Tick(float DeltaTime)
 	}
 
 	// 攻撃が生成されるまでの時間
-	if (bIsReady && !bIsMove)
+	if (!bIsReady && !bIsMove)
 	{
 		ReadyTime += DeltaTime;
 		if (ReadyTime > EnemyData->SpawnTime)
 		{
 			bIsReady = true;
+
+			// 攻撃を設定
+			SetAttackActor();
 		}
 	}
 	// 攻撃が生成されたら
-	else if (!bIsReady && !bIsMove)
+	else if (bIsReady && !bIsMove)
 	{
 		TotalTime += DeltaTime;
 
-		// 攻撃を設定
-		SetAttackActor();
+		if (bIsRespawn)
+		{
+			RespawnTime += DeltaTime;
+
+			if (RespawnTime > EnemyData->WiteTime)
+			{
+				AdvanceTurnMove(PrevLocation);
+				PrevLocation.Reset();
+				bIsRespawn = false;
+			}
+		}
 
 		// 攻撃を呼び出す
 		SpawnAttackActor();
@@ -224,37 +236,63 @@ void AEnemyActor::SetBoxCollision()
 
 void AEnemyActor::SetAttackActor()
 {
-	if (!EnemyData->bIsReady) return;
-
 	int32 Range = FMath::Min(EnemyData->Count, AttackArray.Num());
-	for (int32 index = TurnMoveArray.Num(); index < Range; ++index)
+	for (const FAttackState Item : AttackArray)
 	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		FVector AttackLocation = FVector::Zero();
-		AttackLocation.Y = EnemyData->AttackDistance.X + EnemyData->AttackDistance.Y * (index / 2);
-		if (index % 2 == 1)
+		if (!Item.bIsFalling)
 		{
-			AttackLocation.Y *= -1;
+			if (TurnMoveCount < Range)
+			{
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.Owner = this;
+
+				FVector AttackLocation = FVector::Zero();
+				AttackLocation.Y = EnemyData->AttackDistance.X + EnemyData->AttackDistance.Y * (TurnMoveCount / 2);
+				if (TurnMoveCount % 2 == 1)
+				{
+					AttackLocation.Y *= -1;
+				}
+				AttackLocation.Z = FMath::RandRange(0.0, EnemyData->AttackDistance.Z);
+				TurnMoveArray.Add(GetWorld()->SpawnActor<ATurnMoveActor>(TurnMoveActor, FTransform(GetActorLocation() + AttackLocation), SpawnParams));
+			}
+
+			++TurnMoveCount;
 		}
-		AttackLocation.Z = FMath::RandRange(0.0, EnemyData->AttackDistance.Z);
-		TurnMoveArray.Add(GetWorld()->SpawnActor<ATurnMoveActor>(TurnMoveActor, FTransform(GetActorLocation() + AttackLocation), SpawnParams));
+	}
+}
+
+void AEnemyActor::AdvanceTurnMove(TArray<FVector> TLocation)
+{
+	for (FVector Location : TLocation)
+	{
+		if (TurnMoveCount - TurnMoveArray.Num() > 0)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this;
+
+			Location.Z = FMath::RandRange(0.0, EnemyData->AttackDistance.Z) + GetActorLocation().Z;
+			TurnMoveArray.Add(GetWorld()->SpawnActor<ATurnMoveActor>(TurnMoveActor, FTransform(Location), SpawnParams));
+		}
+
+		TurnMoveArray.RemoveAt(0);
+		--TurnMoveCount;
 	}
 }
 
 void AEnemyActor::ResetAttack()
 {
-	bIsReady = EnemyData->bIsReady;
+	bIsReady = false;
 	bIsMove = false;
 	ReadyTime = 0.0f;
 	TotalTime = 0.0f;
 	AttackArray = EnemyData->AttackState;
 	TurnMoveArray.Reset();
+	TurnMoveCount = 0;
 }
 
 void AEnemyActor::SpawnAttackActor()
 {
-	TArray<int32> IndexToRemove;
+	index = 0;
 
 	AttackArray.RemoveAll([this](const FAttackState& Item)
 	{
@@ -271,7 +309,7 @@ void AEnemyActor::SpawnAttackActor()
 			ActorRotator.Pitch = FMath::RandRange(Item.PitchRange.X, Item.PitchRange.Y);
 			ActorRotator.Yaw = FMath::RandRange(Item.YawRange.X, Item.YawRange.Y);
 
-			if (EnemyData->bIsReady && TurnMoveArray[0]->GetActorLocation().Y < GetActorLocation().Y)
+			if (!Item.bIsFalling && TurnMoveArray[index]->GetActorLocation().Y < GetActorLocation().Y)
 			{
 				ActorRotator.Yaw *= -1;
 			}
@@ -292,10 +330,15 @@ void AEnemyActor::SpawnAttackActor()
 				break;
 			}
 
-			if (EnemyData->bIsReady)
+			if (!Item.bIsFalling)
 			{
-				TurnMoveArray[0]->MoveActive();
-				TurnMoveArray.RemoveAt(0);
+				if (TurnMoveArray.Num() != 0)
+				{
+					PrevLocation.Add(TurnMoveArray[index]->GetActorLocation());
+					TurnMoveArray[index]->MoveActive();
+					++index;
+					bIsRespawn = true;
+				}
 			}
 			else
 			{
