@@ -7,6 +7,8 @@
 #include "Components/BoxComponent.h"
 #include "Enemy/FallActor.h"
 #include "Enemy/EnemyData.h"
+#include "Component/DamageFlashComponent.h"
+#include "Sound/SEManager.h"
 
 AEnemyActor::AEnemyActor()
 {
@@ -26,6 +28,16 @@ void AEnemyActor::BeginPlay()
 
 	// 移動するごとに初期化するもの
 	ResetAttack();
+
+	//点滅させる処理を取得
+	DamageFlashComponent = FindComponentByClass<UDamageFlashComponent>();
+
+	if (IsValid(HealthManager))
+	{
+		//ダメージ通知を受け取るよう登録する
+		HealthManager->OnDamaged.AddUObject(this, &AEnemyActor::OnDamaged);
+	}
+
 }
 
 void AEnemyActor::Tick(float DeltaTime)
@@ -279,6 +291,38 @@ void AEnemyActor::SpawnAttackActor()
 		return false;
 	});
 }
+
+void AEnemyActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	//登録を解除する
+	if (IsValid(HealthManager))
+	{
+		HealthManager->OnDamaged.RemoveAll(this);
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+//ダメージを受けた時の処理
+void AEnemyActor::OnDamaged(ECharacterType DamagedType)
+{
+	//自分宛てでなければ何もしない
+	if (DamagedType != ECharacterType::Enemy)
+	{
+		return;
+	}
+
+	if (IsValid(DamageFlashComponent))
+	{
+		DamageFlashComponent->PlayFlash();
+	}
+
+	if (IsValid(SEManager))
+	{
+		SEManager->PlaySE(ESEType::EnemyDamage);
+	}
+}
+
 
 void AEnemyActor::OnOverlapBegin(
 	UPrimitiveComponent* OverlappedComp,

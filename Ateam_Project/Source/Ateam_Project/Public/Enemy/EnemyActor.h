@@ -8,9 +8,12 @@
 #include "Enemy/FallActor.h"
 #include "Enemy/TurnMoveActor.h"
 #include "Enemy/AttackZone.h"
+#include "Health/HealthManager.h"
 #include "EnemyActor.generated.h"
 
 class UBoxComponent;
+class UDamageFlashComponent;
+class ASEManager;
 
 UCLASS()
 class ATEAM_PROJECT_API AEnemyActor : public AActor
@@ -30,6 +33,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason)override;
 
 	void SetObjects();
 	void SetBoxCollision();
@@ -55,6 +59,14 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|LevelGround")
 	TObjectPtr<AActor> GroundActor = nullptr;
+
+	//HPを管理するマネージャー
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Settings|Health")
+	TObjectPtr<AHealthManager> HealthManager = nullptr;
+
+	//SEを管理するマネージャー
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Settings|SE")
+	TObjectPtr<ASEManager> SEManager = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|GroundHeight")
 	float GroundHeight = 0.0f;
@@ -98,4 +110,10 @@ private:
 	bool bIsValid = false;
 	bool bIsReady = false;
 	bool bIsMove = false;
+
+	//ダメージを受けたときに呼ばれる
+	void OnDamaged(ECharacterType DamagedType);
+	//被ダメージ時の点滅コンポーネント
+	UPROPERTY()
+	TObjectPtr<UDamageFlashComponent> DamageFlashComponent = nullptr;
 };
