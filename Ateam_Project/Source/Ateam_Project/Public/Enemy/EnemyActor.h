@@ -53,8 +53,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|AttackZone")
 	TSubclassOf<AAttackZone> AttackZone = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|LevelGround")
+	TObjectPtr<AActor> GroundActor = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|GroundHeight")
 	float GroundHeight = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|")
+	float AngleSpeed = 0.0f;
 
 	UFUNCTION()
 	void OnOverlapBegin(
@@ -80,9 +86,16 @@ private:
 
 	TObjectPtr<AAttackZone> ZoneActor = nullptr;
 	float AttackZoneSize = 0.0f;
+
+	FVector CenterLocation = FVector::Zero();
+	FVector TargetLocation = FVector::Zero();
+	float Radius = 0.0f;
+	float CurrentAngle = 0.0f;
+	float MaxRarotation = 90.0f;
 	
 	float ReadyTime = 0.0f;
 	float TotalTime = 0.0f;
 	bool bIsValid = false;
 	bool bIsReady = false;
+	bool bIsMove = false;
 };
