@@ -6,10 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "FallActor.generated.h"
 
-class UEnemyData;
-class UStaticMeshComponent;
 class UBoxComponent;
-class UCapsuleComponent;
+class AEnemyActor;
+class AAttackZone;
 class AHealthManager;
 
 UCLASS()
@@ -20,24 +19,14 @@ class ATEAM_PROJECT_API AFallActor : public AActor
 public:	
 	AFallActor();
 
-	void SetHoming(bool flag);
+	void MoveActive();
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
-	void SetEnemyData();
 	void SetBoxCollision();
-	void SetPlayerPawn();
-	void SetZoneMesh();
-	void SetZoneCollision();
-	void SetBaseSize();
-	void SpawnZoneActor();
-	void UpdateSize(float WaringTime);
-	void UpdateLocation(float DeltaTime, float WarningTime, float FallSpeed);
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "EnemyData")
-	TObjectPtr<UEnemyData> EnemyData = nullptr;
+	void Falling(float DeltaTime);
 	
 	UFUNCTION()
 	void OnOverlapBegin(
@@ -48,27 +37,22 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
-	UFUNCTION()
-	void OnOverlapEnd(
-		UPrimitiveComponent* OverlappedComp,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex);
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|WiteTime")
+	float WiteTime = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|FallHeight")
+	float FallHeight = 1000.0f;
 
 private:
-	TObjectPtr<AActor> PlayerPawn = nullptr;
-	TObjectPtr<AActor> ZoneActor = nullptr;
-	TObjectPtr<UStaticMeshComponent> ZoneMesh = nullptr;
-	TObjectPtr<UStaticMeshComponent> ZoneCollision = nullptr; //UCapsuleComponent
+	TObjectPtr<AEnemyActor> EnemyActor = nullptr;
+	TObjectPtr<AAttackZone> ZoneActor = nullptr;
+	TObjectPtr<AHealthManager> HealthManager = nullptr;
 	TObjectPtr<UBoxComponent> BoxCollision = nullptr;
-	FVector BaseSizeActor = FVector(0.0f, 0.0f, 0.0f);
-	FVector BaseSizeMesh = FVector(0.0f, 0.0f, 0.0f);
-	FVector BaseSizeColl = FVector(0.0f, 0.0f, 0.0f);
+
+	float MaxActorSize = 0.0f;
+	float FallSpeed = 0.0f;
+
 	float countTime = 0.0f;
 	float FallTime = 0.0f;
-	bool bIsConfigured = false;
-	bool bIsHoming = false;
-	bool bIsHitPlayer = false;
 
-	TObjectPtr<AHealthManager> HealthManager = nullptr;
 };
