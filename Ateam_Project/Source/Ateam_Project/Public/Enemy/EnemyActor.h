@@ -50,11 +50,14 @@ protected:
 	TObjectPtr<APawn> PlayerPawn = nullptr;
 
 	// 攻撃のオブジェクト
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|TurnMoveActor")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Attack|TurnMoveActor")
 	TSubclassOf<ATurnMoveActor> TurnMoveActor = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Attack|FallActor")
+	TSubclassOf<AFallActor> FallActor = nullptr;
+
 	// 攻撃範囲
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|AttackZone")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Attack|AttackZone")
 	TSubclassOf<AAttackZone> AttackZone = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|LevelGround")
@@ -71,7 +74,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|GroundHeight")
 	float GroundHeight = 0.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Speed")
 	float AngleSpeed = 0.0f;
 
 	UFUNCTION()

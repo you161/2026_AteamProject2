@@ -65,16 +65,17 @@ void AEnemyActor::Tick(float DeltaTime)
 
 			if (GroundActor)
 			{
+				FVector CurrentLocation = GetActorLocation();
+
 				CenterLocation = GroundActor->GetActorLocation();
 				CenterLocation.Z = GetActorLocation().Z;
 
-				TargetLocation.X = GetActorLocation().Y;
-				TargetLocation.Y = GetActorLocation().X;
-				TargetLocation.Z = GetActorLocation().Z;
+				TargetLocation.X = CurrentLocation.Y;
+				TargetLocation.Y = CurrentLocation.X;
+				TargetLocation.Z = CurrentLocation.Z;
 
-				Radius = FVector::Dist2D(CenterLocation, GetActorLocation());
+				Radius = FVector::Dist2D(CenterLocation, CurrentLocation);
 
-				FVector CurrentLocation = GetActorLocation();
 				CurrentAngle = atan2(CurrentLocation.Y - CenterLocation.Y, CurrentLocation.X - CenterLocation.X);
 			}
 		}
@@ -119,7 +120,7 @@ void AEnemyActor::Tick(float DeltaTime)
 	}
 
 	// 攻撃が生成されるまでの時間
-	if (!bIsReady && !bIsMove)
+	if (bIsReady && !bIsMove)
 	{
 		ReadyTime += DeltaTime;
 		if (ReadyTime > EnemyData->SpawnTime)
@@ -128,12 +129,12 @@ void AEnemyActor::Tick(float DeltaTime)
 		}
 	}
 	// 攻撃が生成されたら
-	else if (bIsReady && !bIsMove)
+	else if (!bIsReady && !bIsMove)
 	{
+		TotalTime += DeltaTime;
+
 		// 攻撃を設定
 		SetAttackActor();
-
-		TotalTime += DeltaTime;
 
 		// 攻撃を呼び出す
 		SpawnAttackActor();
@@ -159,6 +160,12 @@ void AEnemyActor::SetObjects()
 	if (!IsValid(TurnMoveActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("TurnMoveActor is not set in EnemyActor."));
+		bIsValid = false;
+	}
+
+	if (!IsValid(FallActor))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FallActor is not set in EnemyActor."));
 		bIsValid = false;
 	}
 
@@ -217,6 +224,8 @@ void AEnemyActor::SetBoxCollision()
 
 void AEnemyActor::SetAttackActor()
 {
+	if (!EnemyData->bIsReady) return;
+
 	int32 Range = FMath::Min(EnemyData->Count, AttackArray.Num());
 	for (int32 index = TurnMoveArray.Num(); index < Range; ++index)
 	{
@@ -235,7 +244,7 @@ void AEnemyActor::SetAttackActor()
 
 void AEnemyActor::ResetAttack()
 {
-	bIsReady = false;
+	bIsReady = EnemyData->bIsReady;
 	bIsMove = false;
 	ReadyTime = 0.0f;
 	TotalTime = 0.0f;
@@ -261,7 +270,8 @@ void AEnemyActor::SpawnAttackActor()
 
 			ActorRotator.Pitch = FMath::RandRange(Item.PitchRange.X, Item.PitchRange.Y);
 			ActorRotator.Yaw = FMath::RandRange(Item.YawRange.X, Item.YawRange.Y);
-			if (TurnMoveArray[0]->GetActorLocation().Y < GetActorLocation().Y)
+
+			if (EnemyData->bIsReady && TurnMoveArray[0]->GetActorLocation().Y < GetActorLocation().Y)
 			{
 				ActorRotator.Yaw *= -1;
 			}
@@ -282,8 +292,16 @@ void AEnemyActor::SpawnAttackActor()
 				break;
 			}
 
-			TurnMoveArray[0]->MoveActive();
-			TurnMoveArray.RemoveAt(0);
+			if (EnemyData->bIsReady)
+			{
+				TurnMoveArray[0]->MoveActive();
+				TurnMoveArray.RemoveAt(0);
+			}
+			else
+			{
+				GetWorld()->SpawnActor<AFallActor>(FallActor, FTransform(ZoneLocation), SpawnParams);
+			}
+
 
 			return true;
 		}
