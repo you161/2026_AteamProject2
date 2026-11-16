@@ -106,7 +106,7 @@ void ATurnMoveActor::OnOverlapBegin(
 		{
 			if (IsValid(HealthManager))
 			{
-				HealthManager->TakeDamage(CharactorType::Player);
+				HealthManager->TakeDamage(ECharacterType::Player);
 			}
 			
 
@@ -120,7 +120,7 @@ void ATurnMoveActor::OnOverlapBegin(
 			{
 				if (IsValid(HealthManager))
 				{
-					HealthManager->TakeDamage(CharactorType::Player);
+					HealthManager->TakeDamage(ECharacterType::Player);
 				}
 			}
 			ZoneActor->Destroy();
