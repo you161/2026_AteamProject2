@@ -7,7 +7,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Enemy/EnemyActor.h"
 #include "Enemy/AttackZone.h"
-#include "Health/HealthManager.h"
+#include "Enemy/EnemyManager.h"
 
 ATurnMoveActor::ATurnMoveActor()
 {
@@ -31,10 +31,10 @@ void ATurnMoveActor::BeginPlay()
 	bIsMoveActive = false;
 	bIsValid = true;
 
-	HealthManager = Cast<AHealthManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AHealthManager::StaticClass()));
-	if (!IsValid(HealthManager))
+	EnemyManager = Cast<AEnemyManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AEnemyManager::StaticClass()));
+	if (!IsValid(EnemyManager))
 	{
-		UE_LOG(LogTemp, Error, TEXT("HealthManager is null in ATurnMoveActor"));
+		UE_LOG(LogTemp, Error, TEXT("EnemyManager is null in ATurnMoveActor"));
 	}
 }
 
@@ -104,9 +104,9 @@ void ATurnMoveActor::OnOverlapBegin(
 	{
 		if (OtherComp->ComponentHasTag(TEXT("Player")))
 		{
-			if (IsValid(HealthManager))
+			if (IsValid(EnemyManager))
 			{
-				HealthManager->TakeDamage(ECharacterType::Player);
+				EnemyManager->NotifyHitPlayer(EEnemyAttackType::Normal);
 			}
 			
 
@@ -118,9 +118,9 @@ void ATurnMoveActor::OnOverlapBegin(
 		{
 			if (ZoneActor->GetIsHitPlayer())
 			{
-				if (IsValid(HealthManager))
+				if (IsValid(EnemyManager))
 				{
-					HealthManager->TakeDamage(ECharacterType::Player);
+					EnemyManager->NotifyHitPlayer(EEnemyAttackType::Normal);
 				}
 			}
 			ZoneActor->Destroy();

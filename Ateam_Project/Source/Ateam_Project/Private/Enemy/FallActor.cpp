@@ -6,7 +6,7 @@
 #include "Components/BoxComponent.h"
 #include "Enemy/EnemyActor.h"
 #include "Enemy/AttackZone.h"
-#include "Health/HealthManager.h"
+#include "Enemy/EnemyManager.h"
 
 AFallActor::AFallActor()
 {
@@ -31,7 +31,12 @@ void AFallActor::BeginPlay()
 	countTime = 0.0f;
 	FallTime = 0.0f;
 
-	HealthManager = Cast<AHealthManager>(UGameplayStatics::GetActorOfClass(GetWorld(),AHealthManager::StaticClass()));
+	EnemyManager = Cast<AEnemyManager>(UGameplayStatics::GetActorOfClass(GetWorld(),AEnemyManager::StaticClass()));
+
+	if (!IsValid(EnemyManager))
+	{
+		UE_LOG(LogTemp, Error, TEXT("EnemyManager is null in FallActor"));
+	}
 }
 
 void AFallActor::Tick(float DeltaTime)
@@ -92,9 +97,9 @@ void AFallActor::OnOverlapBegin(
 	{
 		if (OtherComp->ComponentHasTag(TEXT("Player")))
 		{
-			if (IsValid(HealthManager))
+			if (IsValid(EnemyManager))
 			{
-				HealthManager->TakeDamage(ECharacterType::Player);
+				EnemyManager->NotifyHitPlayer(EEnemyAttackType::Normal);
 			}
 
 
@@ -106,9 +111,9 @@ void AFallActor::OnOverlapBegin(
 		{
 			if (ZoneActor->GetIsHitPlayer())
 			{
-				if (IsValid(HealthManager))
+				if (IsValid(EnemyManager))
 				{
-					HealthManager->TakeDamage(ECharacterType::Player);
+					EnemyManager->NotifyHitPlayer(EEnemyAttackType::Normal);
 				}
 			}
 			ZoneActor->Destroy();

@@ -9,7 +9,7 @@
 class UBoxComponent;
 class AEnemyActor;
 class AAttackZone;
-class AHealthManager;
+class AEnemyManager;
 
 UCLASS()
 class ATEAM_PROJECT_API AFallActor : public AActor
@@ -46,7 +46,7 @@ protected:
 private:
 	TObjectPtr<AEnemyActor> EnemyActor = nullptr;
 	TObjectPtr<AAttackZone> ZoneActor = nullptr;
-	TObjectPtr<AHealthManager> HealthManager = nullptr;
+	TObjectPtr<AEnemyManager> EnemyManager = nullptr;
 	TObjectPtr<UBoxComponent> BoxCollision = nullptr;
 
 	float MaxActorSize = 0.0f;

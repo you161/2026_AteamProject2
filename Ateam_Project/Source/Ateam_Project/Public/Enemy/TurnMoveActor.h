@@ -9,7 +9,7 @@
 class UBoxComponent;
 class AEnemyActor;
 class AAttackZone;
-class AHealthManager;
+class AEnemyManager;
 
 UCLASS()
 class ATEAM_PROJECT_API ATurnMoveActor : public AActor
@@ -45,7 +45,7 @@ protected:
 private:
 	TObjectPtr<AEnemyActor> EnemyActor = nullptr;
 	TObjectPtr<AAttackZone> ZoneActor = nullptr;
-	TObjectPtr<AHealthManager> HealthManager = nullptr;
+	TObjectPtr<AEnemyManager> EnemyManager = nullptr;
 	float MaxActorSize = 0.0f;
 	float MoveSpeed = 0.0f;
 	float RotationSpeed = 0.0f;
