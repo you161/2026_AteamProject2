@@ -14,7 +14,8 @@ UENUM(BlueprintType)
 enum class EAttackSeed : uint8
 {
 	RandomAttack = 0,
-	HomingAttack
+	HomingAttack,
+	Reset,
 };
 
 USTRUCT(BlueprintType)
@@ -28,29 +29,35 @@ struct FAttackState
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃の種類"))
 	EAttackSeed AttackSeed = EAttackSeed::RandomAttack;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃を上から落とすか"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃を上から落とすか"),
+		meta = (EditCondition = "AttackSeed != EAttackSeed::Reset"))
 	bool bIsFalling = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃アクタのサイズ"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃アクタのサイズ"),
+		meta = (EditCondition = "AttackSeed != EAttackSeed::Reset"))
 	float ActorSize = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃範囲のサイズ"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "攻撃範囲のサイズ"),
+		meta = (EditCondition = "AttackSeed != EAttackSeed::Reset"))
 	float ZoneSize = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "移動速度"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "移動速度"),
+		meta = (EditCondition = "AttackSeed != EAttackSeed::Reset"))
 	float MoveSpeed = 1000.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "回転速度"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "回転速度"),
+		meta = (EditCondition = "AttackSeed != EAttackSeed::Reset && !bIsFalling"))
 	float RotationSpeed = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "移動開始時の向き(上下)  X = Min Y = Max"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "移動開始時の向き(上下)  X = Min Y = Max"),
+		meta = (EditCondition = "AttackSeed != EAttackSeed::Reset && !bIsFalling"))
 	FVector2D PitchRange = FVector2D::Zero();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "移動開始時の向き(左右)  X = Min Y = Max"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "移動開始時の向き(左右)  X = Min Y = Max"),
+		meta = (EditCondition = "AttackSeed != EAttackSeed::Reset && !bIsFalling"))
 	FVector2D YawRange = FVector2D::Zero();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly,
-		meta = (DisplayName = "生成する範囲  X = MinX Y = MinY Z = MaxX W = MaxY"),
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "生成する範囲  X = MinX Y = MinY Z = MaxX W = MaxY"),
 		meta = (EditCondition = "AttackSeed == EAttackSeed::RandomAttack"))
 	FVector4 SpawnArea = FVector4::Zero();
 };
