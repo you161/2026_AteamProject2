@@ -47,97 +47,42 @@ void AEnemyActor::Tick(float DeltaTime)
 	// アタッチがされていなければ実行しない
 	if (bIsValid == false) return;
 
-	if (APlayerController* PC = Cast<APlayerController>(PlayerPawn->GetController()))
+	switch (EnemyState)
 	{
-		if (PC->WasInputKeyJustPressed(EKeys::P))
-		{
-			bIsMove = true;
-
-			for (ATurnMoveActor* Actor : TurnMoveArray)
-			{
-				if (IsValid(Actor))
-				{
-					Actor->Destroy();
-				}
-			}
-
-			TurnMoveArray.Reset();
-
-			if (GroundActor)
-			{
-				FVector CurrentLocation = GetActorLocation();
-
-				CenterLocation = GroundActor->GetActorLocation();
-				CenterLocation.Z = GetActorLocation().Z;
-
-				TargetLocation.X = CurrentLocation.Y;
-				TargetLocation.Y = CurrentLocation.X;
-				TargetLocation.Z = CurrentLocation.Z;
-
-				Radius = FVector::Dist2D(CenterLocation, CurrentLocation);
-
-				CurrentAngle = atan2(CurrentLocation.Y - CenterLocation.Y, CurrentLocation.X - CenterLocation.X);
-			}
-		}
-	}
-
-	if (bIsMove)
-	{
-		FVector CurrentLocation = GetActorLocation();
-
-		float DistanceToTarget = FVector::Dist2D(CurrentLocation, TargetLocation);
-
-		if (DistanceToTarget <= 25.0f)
-		{
-			bIsMove = false;
-			FVector Forward = CenterLocation - TargetLocation;
-			FRotator Rotator = Forward.GetSafeNormal().Rotation();
-			SetActorRotation(Rotator);
-			ResetAttack();
-		}
-		else
-		{
-			// 角度を時間経過とともに進める
-			CurrentAngle += AngleSpeed * DeltaTime;
-
-			// 新しい位置を計算
-			FVector NewLocation = GetActorLocation();
-			NewLocation.X = CenterLocation.X + Radius * cos(CurrentAngle);
-			NewLocation.Y = CenterLocation.Y + Radius * sin(CurrentAngle);
-
-			SetActorLocation(NewLocation, false, nullptr, ETeleportType::TeleportPhysics);
-
-			float FutureAngle = CurrentAngle + 0.01f;
-			FVector FutureLocation;
-			FutureLocation.X = CenterLocation.X + Radius * cos(FutureAngle);
-			FutureLocation.Y = CenterLocation.Y + Radius * sin(FutureAngle);
-			FutureLocation.Z = NewLocation.Z;
-
-			// 現在地から未来の位置へ向かう回転を計算して適用
-			FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(NewLocation, FutureLocation);
-			SetActorRotation(TargetRotation);
-		}
-	}
-
-	// 攻撃が生成されるまでの時間
-	if (bIsReady && !bIsMove)
-	{
+	case EEnemyState::Ready:
 		ReadyTime += DeltaTime;
 		if (ReadyTime > EnemyData->SpawnTime)
 		{
-			bIsReady = true;
+			EnemyState = EEnemyState::Active;
+
+			// 攻撃を設定
+			SetAttackActor();
 		}
-	}
-	// 攻撃が生成されたら
-	else if (!bIsReady && !bIsMove)
-	{
+		break;
+
+	case EEnemyState::Active:
 		TotalTime += DeltaTime;
 
-		// 攻撃を設定
-		SetAttackActor();
+		if (bIsRespawn)
+		{
+			RespawnTime += DeltaTime;
+
+			if (RespawnTime > EnemyData->WiteTime)
+			{
+				AdvanceTurnMove(PrevLocation);
+				PrevLocation.Reset();
+				RespawnTime = 0.0f;
+				bIsRespawn = false;
+			}
+		}
 
 		// 攻撃を呼び出す
 		SpawnAttackActor();
+		break;
+
+	case EEnemyState::Move:
+		Move(DeltaTime);
+		break;
 	}
 }
 
@@ -224,42 +169,83 @@ void AEnemyActor::SetBoxCollision()
 
 void AEnemyActor::SetAttackActor()
 {
-	if (!EnemyData->bIsReady) return;
-
 	int32 Range = FMath::Min(EnemyData->Count, AttackArray.Num());
-	for (int32 index = TurnMoveArray.Num(); index < Range; ++index)
+	for (const FAttackState Item : AttackArray)
 	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		FVector AttackLocation = FVector::Zero();
-		AttackLocation.Y = EnemyData->AttackDistance.X + EnemyData->AttackDistance.Y * (index / 2);
-		if (index % 2 == 1)
+		if (!Item.bIsFalling && Item.AttackSeed != EAttackSeed::Reset)
 		{
-			AttackLocation.Y *= -1;
+			if (TurnMoveCount < Range)
+			{
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.Owner = this;
+
+				FVector AttackLocation = FVector::Zero();
+				AttackLocation.Y = EnemyData->AttackDistance.X + EnemyData->AttackDistance.Y * (TurnMoveCount / 2);
+				if (TurnMoveCount % 2 == 1)
+				{
+					AttackLocation.Y *= -1;
+				}
+				AttackLocation.Z = FMath::RandRange(0.0, EnemyData->AttackDistance.Z);
+				TurnMoveArray.Add(GetWorld()->SpawnActor<ATurnMoveActor>(TurnMoveActor, FTransform(GetActorLocation() + AttackLocation), SpawnParams));
+			}
+
+			++TurnMoveCount;
 		}
-		AttackLocation.Z = FMath::RandRange(0.0, EnemyData->AttackDistance.Z);
-		TurnMoveArray.Add(GetWorld()->SpawnActor<ATurnMoveActor>(TurnMoveActor, FTransform(GetActorLocation() + AttackLocation), SpawnParams));
+	}
+}
+
+void AEnemyActor::AdvanceTurnMove(TArray<FVector> TLocation)
+{
+	for (FVector Location : TLocation)
+	{
+		if (TurnMoveCount - TurnMoveArray.Num() > 0)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this;
+
+			Location.Z = FMath::RandRange(0.0, EnemyData->AttackDistance.Z) + GetActorLocation().Z;
+			TurnMoveArray.Add(GetWorld()->SpawnActor<ATurnMoveActor>(TurnMoveActor, FTransform(Location), SpawnParams));
+		}
 	}
 }
 
 void AEnemyActor::ResetAttack()
 {
-	bIsReady = EnemyData->bIsReady;
-	bIsMove = false;
+	EnemyState = EEnemyState::Ready;
+	bIsReset = false;
+	bIsRespawn = false;
+
 	ReadyTime = 0.0f;
 	TotalTime = 0.0f;
+	RespawnTime = 0.0f;
+
 	AttackArray = EnemyData->AttackState;
+
+	for (ATurnMoveActor* Actor : TurnMoveArray)
+	{
+		if (IsValid(Actor))
+		{
+			Actor->Destroy();
+		}
+	}
 	TurnMoveArray.Reset();
+	TurnMoveCount = 0;
+
+	PrevLocation.Reset();
 }
 
 void AEnemyActor::SpawnAttackActor()
 {
-	TArray<int32> IndexToRemove;
-
 	AttackArray.RemoveAll([this](const FAttackState& Item)
 	{
 		if (TotalTime > Item.AttackTime)
 		{
+			if (Item.AttackSeed == EAttackSeed::Reset)
+			{
+				bIsReset = true;
+				return false;
+			}
+
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = this;
 
@@ -271,7 +257,7 @@ void AEnemyActor::SpawnAttackActor()
 			ActorRotator.Pitch = FMath::RandRange(Item.PitchRange.X, Item.PitchRange.Y);
 			ActorRotator.Yaw = FMath::RandRange(Item.YawRange.X, Item.YawRange.Y);
 
-			if (EnemyData->bIsReady && TurnMoveArray[0]->GetActorLocation().Y < GetActorLocation().Y)
+			if (!Item.bIsFalling && TurnMoveArray[0]->GetActorLocation().Y < GetActorLocation().Y)
 			{
 				ActorRotator.Yaw *= -1;
 			}
@@ -292,10 +278,16 @@ void AEnemyActor::SpawnAttackActor()
 				break;
 			}
 
-			if (EnemyData->bIsReady)
+			if (!Item.bIsFalling)
 			{
-				TurnMoveArray[0]->MoveActive();
-				TurnMoveArray.RemoveAt(0);
+				if (TurnMoveArray.Num() != 0)
+				{
+					PrevLocation.Add(TurnMoveArray[0]->GetActorLocation());
+					TurnMoveArray[0]->MoveActive();
+					TurnMoveArray.RemoveAt(0);
+					--TurnMoveCount;
+					bIsRespawn = true;
+				}
 			}
 			else
 			{
@@ -308,6 +300,52 @@ void AEnemyActor::SpawnAttackActor()
 
 		return false;
 	});
+
+	if (bIsReset)
+	{
+		ResetAttack();
+	}
+}
+
+void AEnemyActor::Move(float DeltaTime)
+{
+	if (EnemyState == EEnemyState::Move)
+	{
+		FVector CurrentLocation = GetActorLocation();
+
+		float DistanceToTarget = FVector::Dist2D(CurrentLocation, TargetLocation);
+
+		if (DistanceToTarget <= 25.0f)
+		{
+			EnemyState = EEnemyState::Ready;
+			FVector Forward = CenterLocation - TargetLocation;
+			FRotator Rotator = Forward.GetSafeNormal().Rotation();
+			SetActorRotation(Rotator);
+			ResetAttack();
+		}
+		else
+		{
+			// 角度を時間経過とともに進める
+			CurrentAngle += AngleSpeed * DeltaTime;
+
+			// 新しい位置を計算
+			FVector NewLocation = GetActorLocation();
+			NewLocation.X = CenterLocation.X + Radius * cos(CurrentAngle);
+			NewLocation.Y = CenterLocation.Y + Radius * sin(CurrentAngle);
+
+			SetActorLocation(NewLocation, false, nullptr, ETeleportType::TeleportPhysics);
+
+			float FutureAngle = CurrentAngle + 0.01f;
+			FVector FutureLocation;
+			FutureLocation.X = CenterLocation.X + Radius * cos(FutureAngle);
+			FutureLocation.Y = CenterLocation.Y + Radius * sin(FutureAngle);
+			FutureLocation.Z = NewLocation.Z;
+
+			// 現在地から未来の位置へ向かう回転を計算して適用
+			FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(NewLocation, FutureLocation);
+			SetActorRotation(TargetRotation);
+		}
+	}
 }
 
 void AEnemyActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -400,4 +438,26 @@ float AEnemyActor::GetAttackMoveSpeed()
 float AEnemyActor::GetAttackRotationSpeed()
 {
 	return AttackRotationSpeed;
+}
+
+void AEnemyActor::SetMoveActive()
+{
+	ResetAttack();
+	EnemyState = EEnemyState::Move;
+
+	if (GroundActor)
+	{
+		FVector CurrentLocation = GetActorLocation();
+
+		CenterLocation = GroundActor->GetActorLocation();
+		CenterLocation.Z = GetActorLocation().Z;
+
+		TargetLocation.X = CurrentLocation.Y;
+		TargetLocation.Y = CurrentLocation.X;
+		TargetLocation.Z = CurrentLocation.Z;
+
+		Radius = FVector::Dist2D(CenterLocation, CurrentLocation);
+
+		CurrentAngle = atan2(CurrentLocation.Y - CenterLocation.Y, CurrentLocation.X - CenterLocation.X);
+	}
 }

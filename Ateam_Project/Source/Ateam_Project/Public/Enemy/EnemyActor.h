@@ -15,6 +15,14 @@ class UBoxComponent;
 class UDamageFlashComponent;
 class ASEManager;
 
+UENUM(BlueprintType)
+enum class EEnemyState : uint8
+{
+	Ready = 0,
+	Active,
+	Move
+};
+
 UCLASS()
 class ATEAM_PROJECT_API AEnemyActor : public AActor
 {
@@ -30,6 +38,8 @@ public:
 	float GetAttackMoveSpeed();
 	float GetAttackRotationSpeed();
 
+	void SetMoveActive();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
@@ -38,8 +48,10 @@ protected:
 	void SetObjects();
 	void SetBoxCollision();
 	void SetAttackActor();
+	void AdvanceTurnMove(TArray<FVector> TLocation);
 	void ResetAttack();
 	void SpawnAttackActor();
+	void Move(float DeltaTime);
 
 	// 敵のアセットデータ
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|EnemyData")
@@ -90,9 +102,11 @@ private:
 	TObjectPtr<UBoxComponent> HeadCollision = nullptr;
 	TObjectPtr<UBoxComponent> BodyCollision = nullptr;
 	TObjectPtr<UBoxComponent> LegCollision = nullptr;
+	EEnemyState EnemyState = EEnemyState::Ready;
 
 	TArray<FAttackState> AttackArray = {};
 	TArray<ATurnMoveActor*> TurnMoveArray = {};
+	int32 TurnMoveCount = 0;
 
 	FRotator ActorRotator = FRotator(0.f, 0.f, 0.f);
 	float AttackActorSize = 0.0f;
@@ -104,15 +118,17 @@ private:
 
 	FVector CenterLocation = FVector::Zero();
 	FVector TargetLocation = FVector::Zero();
+	TArray<FVector> PrevLocation = {};
 	float Radius = 0.0f;
 	float CurrentAngle = 0.0f;
 	float MaxRarotation = 90.0f;
 	
 	float ReadyTime = 0.0f;
 	float TotalTime = 0.0f;
+	float RespawnTime = 0.0f;
 	bool bIsValid = false;
-	bool bIsReady = false;
-	bool bIsMove = false;
+	bool bIsReset = false;
+	bool bIsRespawn = false;
 
 	//ダメージを受けたときに呼ばれる
 	void OnDamaged(ECharacterType DamagedType);

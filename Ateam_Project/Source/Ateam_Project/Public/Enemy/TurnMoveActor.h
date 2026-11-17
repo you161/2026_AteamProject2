@@ -11,6 +11,14 @@ class AEnemyActor;
 class AAttackZone;
 class AEnemyManager;
 
+UENUM(BlueprintType)
+enum class ETurnMoveState : uint8
+{
+	Spawn = 0,
+	Ready,
+	Move
+};
+
 UCLASS()
 class ATEAM_PROJECT_API ATurnMoveActor : public AActor
 {
@@ -43,13 +51,16 @@ protected:
 	float MaxRotation = 10.0f;
 
 private:
+	ETurnMoveState TurnMoveState = ETurnMoveState::Spawn;
 	TObjectPtr<AEnemyActor> EnemyActor = nullptr;
 	TObjectPtr<AAttackZone> ZoneActor = nullptr;
 	TObjectPtr<AEnemyManager> EnemyManager = nullptr;
+
+	FVector StartLocation = FVector::Zero();
 	float MaxActorSize = 0.0f;
 	float MoveSpeed = 0.0f;
 	float RotationSpeed = 0.0f;
 	float countTime = 0.0f;
 	bool bIsValid = false;
-	bool bIsMoveActive = false;
+	//bool bIsMoveActive = false;
 };

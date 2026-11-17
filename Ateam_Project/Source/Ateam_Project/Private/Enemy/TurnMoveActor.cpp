@@ -28,7 +28,9 @@ void ATurnMoveActor::BeginPlay()
 
 	EnemyActor = Cast<AEnemyActor>(GetOwner());
 
-	bIsMoveActive = false;
+	StartLocation = GetActorLocation();
+
+	TurnMoveState = ETurnMoveState::Spawn;
 	bIsValid = true;
 
 	EnemyManager = Cast<AEnemyManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AEnemyManager::StaticClass()));
@@ -44,14 +46,22 @@ void ATurnMoveActor::Tick(float DeltaTime)
 
 	if (!bIsValid) return;
 
-	if (bIsMoveActive)
+	switch (TurnMoveState)
 	{
+	case ETurnMoveState::Spawn:
+		break;
+
+	case ETurnMoveState::Ready:
+		break;
+
+	case ETurnMoveState::Move:
 		TurnMove(DeltaTime);
 
 		countTime += DeltaTime;
 		float Alpha = FMath::Clamp(countTime, 0.0f, 1.0f);
 		float Size = FMath::Lerp(0.0f, MaxActorSize, Alpha);
 		SetActorScale3D(FVector(Size, Size, Size));
+		break;
 	}
 }
 
@@ -131,7 +141,7 @@ void ATurnMoveActor::OnOverlapBegin(
 
 void ATurnMoveActor::MoveActive()
 {
-	bIsMoveActive = true;
+	TurnMoveState = ETurnMoveState::Move;
 	if (IsValid(EnemyActor))
 	{
 		MaxActorSize = EnemyActor->GetAttackActorSize();
