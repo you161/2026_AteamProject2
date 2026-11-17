@@ -47,29 +47,20 @@ void AEnemyActor::Tick(float DeltaTime)
 	// アタッチがされていなければ実行しない
 	if (bIsValid == false) return;
 
-	if (APlayerController* PC = Cast<APlayerController>(PlayerPawn->GetController()))
+	switch (EnemyState)
 	{
-		if (PC->WasInputKeyJustPressed(EKeys::P))
-		{
-			SetMoveActive();
-		}
-	}
-
-	// 攻撃が生成されるまでの時間
-	if (!bIsReady && !bIsMove)
-	{
+	case EEnemyState::Ready:
 		ReadyTime += DeltaTime;
 		if (ReadyTime > EnemyData->SpawnTime)
 		{
-			bIsReady = true;
+			EnemyState = EEnemyState::Active;
 
 			// 攻撃を設定
 			SetAttackActor();
 		}
-	}
-	// 攻撃が生成されたら
-	else if (bIsReady && !bIsMove)
-	{
+		break;
+
+	case EEnemyState::Active:
 		TotalTime += DeltaTime;
 
 		if (bIsRespawn)
@@ -87,10 +78,11 @@ void AEnemyActor::Tick(float DeltaTime)
 
 		// 攻撃を呼び出す
 		SpawnAttackActor();
-	}
-	else if (bIsMove)
-	{
+		break;
+
+	case EEnemyState::Move:
 		Move(DeltaTime);
+		break;
 	}
 }
 
@@ -219,8 +211,7 @@ void AEnemyActor::AdvanceTurnMove(TArray<FVector> TLocation)
 
 void AEnemyActor::ResetAttack()
 {
-	bIsReady = false;
-	bIsMove = false;
+	EnemyState = EEnemyState::Ready;
 	bIsReset = false;
 	bIsRespawn = false;
 
@@ -318,7 +309,7 @@ void AEnemyActor::SpawnAttackActor()
 
 void AEnemyActor::Move(float DeltaTime)
 {
-	if (bIsMove)
+	if (EnemyState == EEnemyState::Move)
 	{
 		FVector CurrentLocation = GetActorLocation();
 
@@ -326,7 +317,7 @@ void AEnemyActor::Move(float DeltaTime)
 
 		if (DistanceToTarget <= 25.0f)
 		{
-			bIsMove = false;
+			EnemyState = EEnemyState::Ready;
 			FVector Forward = CenterLocation - TargetLocation;
 			FRotator Rotator = Forward.GetSafeNormal().Rotation();
 			SetActorRotation(Rotator);
@@ -452,7 +443,7 @@ float AEnemyActor::GetAttackRotationSpeed()
 void AEnemyActor::SetMoveActive()
 {
 	ResetAttack();
-	bIsMove = true;
+	EnemyState = EEnemyState::Move;
 
 	if (GroundActor)
 	{

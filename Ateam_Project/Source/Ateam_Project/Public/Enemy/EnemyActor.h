@@ -15,6 +15,14 @@ class UBoxComponent;
 class UDamageFlashComponent;
 class ASEManager;
 
+UENUM(BlueprintType)
+enum class EEnemyState : uint8
+{
+	Ready = 0,
+	Active,
+	Move
+};
+
 UCLASS()
 class ATEAM_PROJECT_API AEnemyActor : public AActor
 {
@@ -94,6 +102,7 @@ private:
 	TObjectPtr<UBoxComponent> HeadCollision = nullptr;
 	TObjectPtr<UBoxComponent> BodyCollision = nullptr;
 	TObjectPtr<UBoxComponent> LegCollision = nullptr;
+	EEnemyState EnemyState = EEnemyState::Ready;
 
 	TArray<FAttackState> AttackArray = {};
 	TArray<ATurnMoveActor*> TurnMoveArray = {};
@@ -118,8 +127,6 @@ private:
 	float TotalTime = 0.0f;
 	float RespawnTime = 0.0f;
 	bool bIsValid = false;
-	bool bIsReady = false;
-	bool bIsMove = false;
 	bool bIsReset = false;
 	bool bIsRespawn = false;
 
