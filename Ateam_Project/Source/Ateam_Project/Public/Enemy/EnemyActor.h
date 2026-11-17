@@ -30,6 +30,8 @@ public:
 	float GetAttackMoveSpeed();
 	float GetAttackRotationSpeed();
 
+	void SetMoveActive();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
@@ -41,6 +43,7 @@ protected:
 	void AdvanceTurnMove(TArray<FVector> TLocation);
 	void ResetAttack();
 	void SpawnAttackActor();
+	void Move(float DeltaTime);
 
 	// 敵のアセットデータ
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|EnemyData")
@@ -95,7 +98,6 @@ private:
 	TArray<FAttackState> AttackArray = {};
 	TArray<ATurnMoveActor*> TurnMoveArray = {};
 	int32 TurnMoveCount = 0;
-	int32 index = 0;
 
 	FRotator ActorRotator = FRotator(0.f, 0.f, 0.f);
 	float AttackActorSize = 0.0f;
@@ -118,6 +120,7 @@ private:
 	bool bIsValid = false;
 	bool bIsReady = false;
 	bool bIsMove = false;
+	bool bIsReset = false;
 	bool bIsRespawn = false;
 
 	//ダメージを受けたときに呼ばれる
