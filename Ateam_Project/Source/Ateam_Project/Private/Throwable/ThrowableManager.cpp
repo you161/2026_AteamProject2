@@ -114,4 +114,7 @@ void AThrowableManager::Throw()
 	HeldItem->OnThrown(Player->GetActorForwardVector(), CollectedCount);
 	HeldItem = nullptr;
 	CollectedCount = 0;
+
+	//投げたことを通知する
+	OnThrowStarted.Broadcast();
 }

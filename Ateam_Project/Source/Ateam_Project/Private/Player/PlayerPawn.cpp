@@ -42,7 +42,6 @@ void APlayerPawn::BeginPlay()
 	InitializeInputManager();
 
 	CurrentDirection = FVector::ZeroVector;
-	bIsMoving = false;
 
 	DamageFlashComponent = FindComponentByClass<UDamageFlashComponent>();
 
@@ -53,6 +52,13 @@ void APlayerPawn::BeginPlay()
 	}
 
 	ValidateReferences();
+
+	if (IsValid(ThrowableManager))
+	{
+		ThrowableManager->OnThrowStarted.AddUObject(this, &APlayerPawn::HandleThrowStarted);
+	}
+
+	bIsMoving = false;
 }
 
 void APlayerPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -61,6 +67,11 @@ void APlayerPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (IsValid(HealthManager))
 	{
 		HealthManager->OnDamaged.RemoveAll(this);
+	}
+
+	if (IsValid(ThrowableManager))
+	{
+		ThrowableManager->OnThrowStarted.RemoveAll(this);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -157,11 +168,16 @@ void APlayerPawn::Move(float DeltaTime)
 	const float SpeedRate = bIsDashing ? PlayerData->DashSpeedRate : NormalSpeedRate;
 	const FVector Delta = CurrentDirection * GetMoveSpeed() * SpeedRate * DeltaTime;
 
-	bIsMoving = !Delta.IsNearlyZero();
-
+	bIsMoving = Delta.IsNearlyZero();
+	//移動状態を更新する(アニメーションはこれを読むだけ)
 	if (bIsMoving)
 	{
+		MoveState = EPlayerMoveState::Idle;
+	}
+	else
+	{
 		MoveWithSlide(Delta);
+		MoveState = bIsDashing ? EPlayerMoveState::Dash : EPlayerMoveState::Walk;
 	}
 }
 
@@ -253,7 +269,6 @@ void APlayerPawn::UnPossessed()
 	//古いコントローラーのInputManagerを参照し続けないようにする
 	InputManager = nullptr;
 	CurrentDirection = FVector::ZeroVector;
-	bIsMoving = false;
 }
 
 //InputManagerを初期化する関数
@@ -283,4 +298,22 @@ void APlayerPawn::OnDamaged(ECharacterType DamagedType)
 	{
 		DamageFlashComponent->PlayFlash();
 	}
+}
+
+//オブジェクトを投げた通知を受け取りアニメーションクラスに通知を飛ばす
+void APlayerPawn::HandleThrowStarted()
+{
+	OnThrow.Broadcast();
+}
+
+//移動中かどうかを取得する関数
+bool APlayerPawn::GetIsMoving()const
+{
+	return bIsMoving;
+}
+
+//プレイヤーがオブジェクトを所持しているかを取得する
+bool APlayerPawn::GetHasThrowable() const
+{
+	return IsValid(ThrowableManager) && ThrowableManager->GetCollectedCount() > 0;
 }

@@ -3,9 +3,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Health/CharacterType.h"
+#include "Player/PlayerMoveState.h"
 #include "PlayerPawn.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogPlayerPawn, Log, All);
+DECLARE_MULTICAST_DELEGATE(FOnPlayerThrow);
 
 class UInputManager;
 class UPlayerData;
@@ -28,9 +30,14 @@ public:
 	APlayerPawn();
 
 	virtual void Tick(float DeltaTime) override;
-
-	//プレイヤーが移動中かどうかを取得する関数
-	bool GetIsMoving() const { return bIsMoving; }
+	//移動中かどうかを取得する関数
+	bool GetIsMoving()const;
+	//プレイヤーの移動状態を取得する関数
+	EPlayerMoveState GetMoveState() const { return MoveState; }
+	//プレイヤーがオブジェクトを所持しているかを取得する関数
+	bool GetHasThrowable() const;
+	//プレイヤーが投げたときに通知するデリゲート
+	FOnPlayerThrow OnThrow;
 
 protected:
 
@@ -61,6 +68,8 @@ private:
 	void MoveWithSlide(const FVector& Delta);
 	//ダメージを受けたときに呼ばれる
 	void OnDamaged(ECharacterType DamagedType);
+	//ThrowableManagerからの通知を受けて、自分の通知を飛ばす
+	void HandleThrowStarted();
 
 protected:
 	//プレイヤーのデータを格納するデータアセット
@@ -94,6 +103,7 @@ private:
 	TObjectPtr<UDamageFlashComponent> DamageFlashComponent = nullptr;
 	//現在の移動方向(水平・正規化済み)
 	FVector CurrentDirection = FVector::ZeroVector;
-	//プレイヤーが移動中かどうか
+	//現在の移動状態
+	EPlayerMoveState MoveState = EPlayerMoveState::Idle;
 	bool bIsMoving = false;
 };

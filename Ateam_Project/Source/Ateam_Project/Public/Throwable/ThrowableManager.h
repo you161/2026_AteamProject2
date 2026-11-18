@@ -12,6 +12,7 @@ class UPlayerDamageData;
 
 // 投げたオブジェクトが敵に当たった時に通知するデリゲート
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnThrowableHitEnemy, int32 StackCount);
+DECLARE_MULTICAST_DELEGATE(FOnThrowStarted);
 
 /**
  * 拾ったオブジェクトを管理するマネージャークラス。
@@ -32,6 +33,8 @@ public:
 	int32 GetCollectedCount() const { return CollectedCount; }
 	//投げたアイテムが敵に当たった時に呼ばれるデリゲート
 	FOnThrowableHitEnemy OnHitEnemy;
+	//投げた瞬間に通知するデリゲート
+	FOnThrowStarted OnThrowStarted;
 
 protected:
 	virtual void BeginPlay() override;
