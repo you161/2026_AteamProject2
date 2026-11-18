@@ -28,11 +28,14 @@ void ATurnMoveActor::BeginPlay()
 
 	EnemyActor = Cast<AEnemyActor>(GetOwner());
 
-	StartLocation = GetActorLocation();
+	BaseLocation = GetActorLocation();
+	StartLocation = BaseLocation;
 
 	TurnMoveState = ETurnMoveState::Spawn;
-	bIsValid = true;
+	StartSize = GetActorScale3D();
+	bIsMove = false;
 
+	bIsValid = true;
 	EnemyManager = Cast<AEnemyManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AEnemyManager::StaticClass()));
 	if (!IsValid(EnemyManager))
 	{
@@ -46,31 +49,89 @@ void ATurnMoveActor::Tick(float DeltaTime)
 
 	if (!bIsValid) return;
 
+	countTime += DeltaTime;
+
+	FVector Size;
+	float Alpha;
+
 	switch (TurnMoveState)
 	{
 	case ETurnMoveState::Spawn:
+		MoveRoll();
 		break;
 
 	case ETurnMoveState::Ready:
+		MoveDrift();
 		break;
 
-	case ETurnMoveState::Move:
-		TurnMove(DeltaTime);
+	case ETurnMoveState::Active:
+		MoveTurn(DeltaTime);
 
-		countTime += DeltaTime;
-		float Alpha = FMath::Clamp(countTime, 0.0f, 1.0f);
-		float Size = FMath::Lerp(0.0f, MaxActorSize, Alpha);
-		SetActorScale3D(FVector(Size, Size, Size));
+		Alpha = FMath::Clamp(countTime, 0.0f, 1.0f);
+		Size.X = FMath::Lerp(0.0f, StartSize.X * MaxActorSize, Alpha);
+		Size.Y = FMath::Lerp(0.0f, StartSize.X * MaxActorSize, Alpha);
+		Size.Z = FMath::Lerp(0.0f, StartSize.X * MaxActorSize, Alpha);
+		SetActorScale3D(Size);
 		break;
 	}
 }
 
-void ATurnMoveActor::TurnMove(float DeltaTime)
+// 生成されたときの演出
+void ATurnMoveActor::MoveRoll()
+{
+	float Alpha = FMath::Clamp(countTime / SpawnTime, 0.0f, 1.0f);
+	FVector Size;
+	Size.X = FMath::Lerp(0.0f, StartSize.X, Alpha);
+	Size.Y = FMath::Lerp(0.0f, StartSize.Y, Alpha);
+	Size.Z = FMath::Lerp(0.0f, StartSize.Z, Alpha);
+	SetActorScale3D(Size);
+
+	FRotator Rotator = GetActorRotation();
+	Rotator.Roll += RollSpeed;
+
+	if (countTime > SpawnTime)
+	{
+		Rotator.Roll = 0.0f;
+		countTime = 0.0f;
+		TurnMoveState = ETurnMoveState::Ready;
+	}
+
+	SetActorRotation(Rotator);
+}
+
+// 待機しているときの動き
+void ATurnMoveActor::MoveDrift()
+{
+	if (!bIsMove)
+	{
+		// ランダムな目的地を作る
+		DriftLocation.X = FMath::RandRange(-DriftRange, DriftRange);
+		DriftLocation.Y = FMath::RandRange(-DriftRange, DriftRange);
+		DriftLocation.Z = FMath::RandRange(-DriftRange, DriftRange);
+		DriftLocation += BaseLocation;
+		bIsMove = true;
+	}
+
+	// 加速と減速のある移動
+	float Alpha = FMath::Clamp(countTime / DriftTime, 0.0f, 1.0f);
+	FVector CurrentLocation = FMath::Lerp(StartLocation, DriftLocation, Alpha);
+
+	if (Alpha >= 1.0f)
+	{
+		StartLocation = DriftLocation;
+		countTime = 0.0f;
+		bIsMove = false;
+	}
+
+	SetActorLocation(CurrentLocation);
+}
+
+void ATurnMoveActor::MoveTurn(float DeltaTime)
 {
 	FVector direction = (ZoneActor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 	FVector forward = GetActorForwardVector().GetSafeNormal();
 
-	// 内積を求める　(成す角)
+	// 内積を求める(成す角)
 	float Dot = FVector::DotProduct(forward, direction);
 	float theta = FMath::Acos(FMath::Clamp(Dot, -1.0f, 1.0f));
 
@@ -139,15 +200,25 @@ void ATurnMoveActor::OnOverlapBegin(
 	}
 }
 
+FVector ATurnMoveActor::GetSpawnLocation()
+{
+	return BaseLocation;
+}
+
 void ATurnMoveActor::MoveActive()
 {
-	TurnMoveState = ETurnMoveState::Move;
+	TurnMoveState = ETurnMoveState::Active;
 	if (IsValid(EnemyActor))
 	{
+		countTime = 0.0f;
+
+		// EnemyActorからデータの取得
 		MaxActorSize = EnemyActor->GetAttackActorSize();
 		MoveSpeed = EnemyActor->GetAttackMoveSpeed();
 		RotationSpeed = EnemyActor->GetAttackRotationSpeed();
 		ZoneActor = EnemyActor->GetZoneActor();
+
+		// 新しく向きを設定
 		FVector direction = GetActorLocation() - ZoneActor->GetActorLocation();
 		FRotator Rotator = direction.Rotation();
 		Rotator += EnemyActor->GetActorRotator();
