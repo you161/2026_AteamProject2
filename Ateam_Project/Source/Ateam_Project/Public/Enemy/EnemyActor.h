@@ -83,9 +83,6 @@ protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Settings|SE")
 	TObjectPtr<ASEManager> SEManager = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|GroundHeight")
-	float GroundHeight = 0.0f;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Speed")
 	float AngleSpeed = 0.0f;
 
