@@ -38,6 +38,9 @@ protected:
 	void MoveDrift();
 	void MoveTurn(float DeltaTime);
 
+	UFUNCTION()  // BlueprintCallable, Category = "Bezier"
+	FVector CalculateQuadraticBezier(FVector P0, FVector P1, FVector P2, float T);
+
 	UFUNCTION()
 	void OnOverlapBegin(
 		UPrimitiveComponent* OverlappedComp,
@@ -73,6 +76,7 @@ private:
 
 	FVector BaseLocation = FVector::Zero();
 	FVector StartLocation = FVector::Zero();
+	FVector TargetDirection = FVector::Zero();
 	FVector StartSize = FVector::Zero();
 	FVector DriftLocation = FVector::Zero();
 

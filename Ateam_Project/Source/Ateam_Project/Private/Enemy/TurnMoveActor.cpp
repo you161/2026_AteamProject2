@@ -65,6 +65,12 @@ void ATurnMoveActor::Tick(float DeltaTime)
 		break;
 
 	case ETurnMoveState::Active:
+		if (ZoneActor->GetActorLocation().Z > GetActorLocation().Z)
+		{
+			ZoneActor->Destroy();
+			Destroy();
+		}
+
 		MoveTurn(DeltaTime);
 
 		Alpha = FMath::Clamp(countTime, 0.0f, 1.0f);
@@ -128,22 +134,25 @@ void ATurnMoveActor::MoveDrift()
 
 void ATurnMoveActor::MoveTurn(float DeltaTime)
 {
-	FVector direction = (ZoneActor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+	FVector direction = ZoneActor->GetActorLocation() - GetActorLocation();
 	FVector forward = GetActorForwardVector().GetSafeNormal();
 
 	// 内積を求める(成す角)
-	float Dot = FVector::DotProduct(forward, direction);
+	float Dot = FVector::DotProduct(forward, direction.GetSafeNormal());
 	float theta = FMath::Acos(FMath::Clamp(Dot, -1.0f, 1.0f));
 
 	// 外積を求める
-	FVector Cross = FVector::CrossProduct(forward, direction);
+	FVector Cross = FVector::CrossProduct(forward, direction.GetSafeNormal());
+	Cross.Normalize();
 
-	
 	FRotator Rotator = GetActorRotation();
-	if (FMath::RadiansToDegrees(theta) > MaxRotation)
+	if (!Cross.IsNearlyZero() && GetActorLocation().X > ZoneActor->GetActorLocation().X)
 	{
+		float Alpha = FMath::Clamp(FMath::RadiansToDegrees(theta) / 180.0f, 0.0f, 1.0f);
+		float Angle = FMath::Lerp(RotationSpeed, theta, Alpha);
+
 		// クォータニオンを設定
-		FQuat Quaternion(Cross.GetSafeNormal(), theta * RotationSpeed * DeltaTime);
+		FQuat Quaternion(Cross, Angle * DeltaTime);
 
 		// 回転を更新
 		AddActorWorldRotation(Quaternion);
@@ -151,7 +160,6 @@ void ATurnMoveActor::MoveTurn(float DeltaTime)
 		// Rollをなくして横転しないように
 		Rotator = GetActorRotation();
 		Rotator.Roll = 0.0f;
-
 	}
 	// 角度が小さいなら目的地に回転させる
 	else
@@ -160,7 +168,20 @@ void ATurnMoveActor::MoveTurn(float DeltaTime)
 	}
 
 	SetActorRotation(Rotator);
+	
 	AddActorWorldOffset(GetActorForwardVector() * MoveSpeed * DeltaTime);
+}
+
+FVector ATurnMoveActor::CalculateQuadraticBezier(FVector P0, FVector P1, FVector P2, float T)
+{
+	// 2次ベジェ曲線の数式: B(t) = (1-t)^2 * P0 + 2(1-t)*t * P1 + t^2 * P2
+	float OneMinusT = 1.0f - T;
+
+	FVector Term0 = (OneMinusT * OneMinusT) * P0;
+	FVector Term1 = (2.0f * OneMinusT * T) * P1;
+	FVector Term2 = (T * T) * P2;
+
+	return Term0 + Term1 + Term2;
 }
 
 void ATurnMoveActor::OnOverlapBegin(
@@ -179,7 +200,6 @@ void ATurnMoveActor::OnOverlapBegin(
 			{
 				EnemyManager->NotifyHitPlayer(EEnemyAttackType::Normal);
 			}
-			
 
 			ZoneActor->Destroy();
 			Destroy();
@@ -219,8 +239,9 @@ void ATurnMoveActor::MoveActive()
 		ZoneActor = EnemyActor->GetZoneActor();
 
 		// 新しく向きを設定
-		FVector direction = GetActorLocation() - ZoneActor->GetActorLocation();
-		FRotator Rotator = direction.Rotation();
+		StartLocation = GetActorLocation();
+		TargetDirection = GetActorLocation() - ZoneActor->GetActorLocation();
+		FRotator Rotator = TargetDirection.Rotation();
 		Rotator += EnemyActor->GetActorRotator();
 		SetActorRotation(Rotator);
 	}
