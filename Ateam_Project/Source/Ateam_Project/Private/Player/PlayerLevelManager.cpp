@@ -71,14 +71,10 @@ void APlayerLevelManager::AddExp(int32 StackCount)
 		if (!MaxTable.IsValidIndex(CurrentLevel + 1))
 		{
 			LevelGauge = MaxTable[CurrentLevel];
-			UE_LOG(LogPlayerLevel, Log, TEXT("最大レベルに到達しました。現在のレベル: %d"), CurrentLevel);
 			return;
 		}
 
 		LevelGauge -= MaxTable[CurrentLevel];
 		CurrentLevel++;
-		UE_LOG(LogPlayerLevel, Log, TEXT("レベルアップ！ 現在のレベル: %d"), CurrentLevel);
 	}
-
-	UE_LOG(LogPlayerLevel, Log, TEXT("経験値を追加しました。現在の経験値: %.2f"), LevelGauge);
 }
