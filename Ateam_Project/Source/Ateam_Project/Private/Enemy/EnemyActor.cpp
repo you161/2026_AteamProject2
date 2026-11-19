@@ -268,21 +268,40 @@ void AEnemyActor::SpawnAttackActor()
 			case EAttackSeed::RandomAttack:
 				ZoneLocation.X = FMath::RandRange(Item.SpawnArea.X, Item.SpawnArea.Z);
 				ZoneLocation.Y = FMath::RandRange(Item.SpawnArea.Y, Item.SpawnArea.W);
-				ZoneLocation.Z = GroundHeight;
-				ZoneActor = GetWorld()->SpawnActor<AAttackZone>(AttackZone, FTransform(ZoneLocation), SpawnParams);
+				ZoneLocation.Z = GetActorLocation().Z;
 				break;
 
 			case EAttackSeed::HomingAttack:
-				ZoneLocation = FVector(PlayerPawn->GetActorLocation().X, PlayerPawn->GetActorLocation().Y, GroundHeight);
-				ZoneActor = GetWorld()->SpawnActor<AAttackZone>(AttackZone, FTransform(ZoneLocation), SpawnParams);
+				ZoneLocation = PlayerPawn->GetActorLocation();
 				break;
 			}
+
+			FHitResult HitResult;
+			FVector StartTrace = ZoneLocation;
+			FVector EndTrace = StartTrace + (FVector(0.f, 0.f, 0.f) * 10000.0f);
+			FCollisionQueryParams QueryParams;
+			QueryParams.AddIgnoredActor(this);
+			QueryParams.AddIgnoredActor(PlayerPawn);
+
+			// ライントレースの実行
+			bool bIsHit = GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_Visibility, QueryParams);
+
+			if (bIsHit)
+			{
+				ZoneLocation = HitResult.Location;
+			}
+			else
+			{
+				ZoneLocation.Z = GroundActor->GetActorLocation().Z + GroundActor->GetActorScale3D().Z * 100 * 0.5f;
+			}
+
+			ZoneActor = GetWorld()->SpawnActor<AAttackZone>(AttackZone, FTransform(ZoneLocation), SpawnParams);
 
 			if (!Item.bIsFalling)
 			{
 				if (TurnMoveArray.Num() != 0)
 				{
-					PrevLocation.Add(TurnMoveArray[0]->GetActorLocation());
+					PrevLocation.Add(TurnMoveArray[0]->GetSpawnLocation());
 					TurnMoveArray[0]->MoveActive();
 					TurnMoveArray.RemoveAt(0);
 					--TurnMoveCount;
@@ -293,7 +312,6 @@ void AEnemyActor::SpawnAttackActor()
 			{
 				GetWorld()->SpawnActor<AFallActor>(FallActor, FTransform(ZoneLocation), SpawnParams);
 			}
-
 
 			return true;
 		}
