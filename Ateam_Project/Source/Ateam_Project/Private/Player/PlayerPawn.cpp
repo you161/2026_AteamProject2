@@ -7,6 +7,7 @@
 #include "Player/PlayerLevelManager.h"
 #include "Player/StaminaManager.h"
 #include "Health/HealthManager.h"
+#include "Sound/SEManager.h"
 #include "Component/DamageFlashComponent.h"
 
 DEFINE_LOG_CATEGORY(LogPlayerPawn);
@@ -140,6 +141,11 @@ void APlayerPawn::ValidateReferences() const
 	{
 		UE_LOG(LogPlayerPawn, Warning, TEXT("HealthManager is not set in PlayerPawn."));
 	}
+
+	if (!IsValid(SEManager))
+	{
+		UE_LOG(LogPlayerPawn, Warning, TEXT("SEManager is not set in PlayerPawn."));
+	}
 }
 
 //Tickで必要な参照がそろっているかを返す
@@ -150,7 +156,8 @@ bool APlayerPawn::HasRequiredReferences() const
 		&& IsValid(Camera)
 		&& IsValid(ThrowableManager)
 		&& IsValid(PlayerLevelManager)
-		&& IsValid(StaminaManager);
+		&& IsValid(StaminaManager)
+		&& IsValid(SEManager);
 }
 
 //移動処理
@@ -169,15 +176,20 @@ void APlayerPawn::Move(float DeltaTime)
 	const FVector Delta = CurrentDirection * GetMoveSpeed() * SpeedRate * DeltaTime;
 
 	bIsMoving = Delta.IsNearlyZero();
-	//移動状態を更新する(アニメーションはこれを読むだけ)
+
+	//移動状態を更新する
 	if (bIsMoving)
 	{
 		MoveState = EPlayerMoveState::Idle;
+		SEManager->StopSE(ESEType::PlayerDash);
+		SEManager->StopSE(ESEType::PlayerWalk);
 	}
 	else
 	{
 		MoveWithSlide(Delta);
 		MoveState = bIsDashing ? EPlayerMoveState::Dash : EPlayerMoveState::Walk;
+		bIsDashing ? SEManager->PlaySE(ESEType::PlayerDash) : SEManager->PlaySE(ESEType::PlayerWalk);
+		bIsDashing ? SEManager->StopSE(ESEType::PlayerWalk) : SEManager->StopSE(ESEType::PlayerDash);
 	}
 }
 
@@ -304,6 +316,11 @@ void APlayerPawn::OnDamaged(ECharacterType DamagedType)
 void APlayerPawn::HandleThrowStarted()
 {
 	OnThrow.Broadcast();
+
+	if (IsValid(SEManager))
+	{
+		SEManager->PlaySE(ESEType::PlayerAttack);
+	}
 }
 
 //移動中かどうかを取得する関数

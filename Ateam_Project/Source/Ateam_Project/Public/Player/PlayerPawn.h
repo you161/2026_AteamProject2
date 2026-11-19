@@ -17,6 +17,7 @@ class APlayerLevelManager;
 class AStaminaManager;
 class AHealthManager;
 class UDamageFlashComponent;
+class ASEManager;
 
 /**
  * 入力の値を受け取り、プレイヤーの移動や回転を管理するクラス
@@ -90,6 +91,9 @@ protected:
 	//HPを管理するマネージャー
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|Health")
 	TObjectPtr<AHealthManager> HealthManager = nullptr;
+	//プレイヤーの当たり判定を行うコリジョン
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "PlayerPawn|SEManager")
+	TObjectPtr<ASEManager> SEManager = nullptr;
 	//プレイヤーの当たり判定を行うコリジョン
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
 	TObjectPtr<UCapsuleComponent> CapsuleCollision = nullptr;
