@@ -128,7 +128,7 @@ private:
 	bool bIsRespawn = false;
 
 	//ダメージを受けたときに呼ばれる
-	void OnDamaged(ECharacterType DamagedType);
+	void OnDamaged(ECharacterType DamagedType, int32 DamageLevel);
 	//被ダメージ時の点滅コンポーネント
 	UPROPERTY()
 	TObjectPtr<UDamageFlashComponent> DamageFlashComponent = nullptr;

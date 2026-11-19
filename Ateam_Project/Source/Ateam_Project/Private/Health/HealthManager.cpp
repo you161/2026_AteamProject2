@@ -92,7 +92,7 @@ void AHealthManager::EnsureInitialized()
 }
 
 //指定したキャラクターにダメージを与える
-void AHealthManager::ApplyDamage(ECharacterType Target, float DamageAmount)
+void AHealthManager::ApplyDamage(ECharacterType Target, float DamageAmount,int32 DamageLevel)
 {
 	EnsureInitialized();
 
@@ -113,7 +113,7 @@ void AHealthManager::ApplyDamage(ECharacterType Target, float DamageAmount)
 	CurrentHealth[Index] = FMath::Max(0.0f, CurrentHealth[Index] - DamageAmount);
 
 	//ダメージを受けたことを通知する
-	OnDamaged.Broadcast(Target);
+	OnDamaged.Broadcast(Target, DamageLevel);
 
 	UHitPointBar* Bar = HitPointBars[Index].Get();
 
@@ -160,7 +160,7 @@ void AHealthManager::HandleThrowableHitEnemy(int32 StackCount)
 
 	//投げた時の個数でダメージ量を決定する
 	const int32 Index = FMath::Clamp(StackCount, 0, Table.Num() - 1);
-	ApplyDamage(ECharacterType::Enemy, Table[Index]);
+	ApplyDamage(ECharacterType::Enemy, Table[Index], StackCount);
 }
 
 //HPバー設定

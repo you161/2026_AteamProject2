@@ -18,6 +18,8 @@ enum class ESEType : uint8
     PlayerAttack   UMETA(DisplayName = "プレイヤー攻撃"),
     PlayerDamage   UMETA(DisplayName = "プレイヤーダメージ"),
     EnemyDamage    UMETA(DisplayName = "敵ダメージ"),
+    EnemyDamage2   UMETA(DisplayName = "敵ダメージ(2個)"),
+    EnemyDamage3   UMETA(DisplayName = "敵ダメージ(3個)"),
 };
 
 UENUM(BlueprintType)

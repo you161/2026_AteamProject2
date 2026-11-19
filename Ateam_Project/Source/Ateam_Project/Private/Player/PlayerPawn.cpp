@@ -175,21 +175,21 @@ void APlayerPawn::Move(float DeltaTime)
 	const float SpeedRate = bIsDashing ? PlayerData->DashSpeedRate : NormalSpeedRate;
 	const FVector Delta = CurrentDirection * GetMoveSpeed() * SpeedRate * DeltaTime;
 
-	bIsMoving = Delta.IsNearlyZero();
+	bIsMoving = !Delta.IsNearlyZero();
 
 	//移動状態を更新する
 	if (bIsMoving)
-	{
-		MoveState = EPlayerMoveState::Idle;
-		SEManager->StopSE(ESEType::PlayerDash);
-		SEManager->StopSE(ESEType::PlayerWalk);
-	}
-	else
 	{
 		MoveWithSlide(Delta);
 		MoveState = bIsDashing ? EPlayerMoveState::Dash : EPlayerMoveState::Walk;
 		bIsDashing ? SEManager->PlaySE(ESEType::PlayerDash) : SEManager->PlaySE(ESEType::PlayerWalk);
 		bIsDashing ? SEManager->StopSE(ESEType::PlayerWalk) : SEManager->StopSE(ESEType::PlayerDash);
+	}
+	else
+	{
+		MoveState = EPlayerMoveState::Idle;
+		SEManager->StopSE(ESEType::PlayerDash);
+		SEManager->StopSE(ESEType::PlayerWalk);
 	}
 }
 
@@ -298,7 +298,7 @@ void APlayerPawn::InitializeInputManager()
 }
 
 //ダメージを受けた時の処理
-void APlayerPawn::OnDamaged(ECharacterType DamagedType)
+void APlayerPawn::OnDamaged(ECharacterType DamagedType, int32 DamageLevel)
 {
 	//自分宛てでなければ何もしない
 	if (DamagedType != ECharacterType::Player)
@@ -311,7 +311,6 @@ void APlayerPawn::OnDamaged(ECharacterType DamagedType)
 		DamageFlashComponent->PlayFlash();
 	}
 }
-
 //オブジェクトを投げた通知を受け取りアニメーションクラスに通知を飛ばす
 void APlayerPawn::HandleThrowStarted()
 {

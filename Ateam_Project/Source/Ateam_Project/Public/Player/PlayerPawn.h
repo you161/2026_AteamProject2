@@ -68,7 +68,7 @@ private:
 	//衝突したら壁に沿って滑るように移動する関数
 	void MoveWithSlide(const FVector& Delta);
 	//ダメージを受けたときに呼ばれる
-	void OnDamaged(ECharacterType DamagedType);
+	void OnDamaged(ECharacterType DamagedType, int32 DamageLevel);
 	//ThrowableManagerからの通知を受けて、自分の通知を飛ばす
 	void HandleThrowStarted();
 

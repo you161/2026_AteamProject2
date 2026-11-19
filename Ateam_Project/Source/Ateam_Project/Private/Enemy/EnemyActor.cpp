@@ -10,6 +10,17 @@
 #include "Component/DamageFlashComponent.h"
 #include "Sound/SEManager.h"
 
+namespace
+{
+	//個数に対応する敵ダメージSE。範囲外は最後の要素を使う
+	const ESEType EnemyDamageSEs[] =
+	{
+		ESEType::EnemyDamage,
+		ESEType::EnemyDamage2,
+		ESEType::EnemyDamage3,
+	};
+}
+
 AEnemyActor::AEnemyActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -378,9 +389,8 @@ void AEnemyActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 }
 
 //ダメージを受けた時の処理
-void AEnemyActor::OnDamaged(ECharacterType DamagedType)
+void AEnemyActor::OnDamaged(ECharacterType DamagedType, int32 DamageLevel)
 {
-	//自分宛てでなければ何もしない
 	if (DamagedType != ECharacterType::Enemy)
 	{
 		return;
@@ -393,10 +403,10 @@ void AEnemyActor::OnDamaged(ECharacterType DamagedType)
 
 	if (IsValid(SEManager))
 	{
-		SEManager->PlaySE(ESEType::EnemyDamage);
+		const int32 Index = FMath::Clamp(DamageLevel - 1, 0, UE_ARRAY_COUNT(EnemyDamageSEs) - 1);
+		SEManager->PlaySE(EnemyDamageSEs[Index]);
 	}
 }
-
 
 void AEnemyActor::OnOverlapBegin(
 	UPrimitiveComponent* OverlappedComp,

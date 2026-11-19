@@ -16,7 +16,7 @@ class UHealthData;
 class AThrowableManager;
 
 //ダメージを受けた時に通知するデリゲート
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnDamaged, ECharacterType);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnDamaged, ECharacterType, int32);
 
 /**
  * HP管理クラス。
@@ -29,7 +29,7 @@ class ATEAM_PROJECT_API AHealthManager : public AActor
 public:
 	AHealthManager();
 	//指定したキャラクターに指定した量のダメージを与える
-	void ApplyDamage(ECharacterType Target, float DamageAmount);
+	void ApplyDamage(ECharacterType Target, float DamageAmount, int32 DamageLevel = 0);
 	//HPバー設定
 	void InitializeHealth(UHitPointBar* PlayerBar, UHitPointBar* EnemyBar);
 	//現在のHPを取得する
