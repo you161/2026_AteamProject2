@@ -13,6 +13,9 @@ enum class ESEType : uint8
 {
     ObjectCollect  UMETA(DisplayName = "オブジェクト回収"),
     ObjectThrow    UMETA(DisplayName = "オブジェクト投擲"),
+    PlayerWalk   UMETA(DisplayName = "プレイヤーの足音"),
+    PlayerDash   UMETA(DisplayName = "プレイヤーのダッシュ"),
+    PlayerAttack   UMETA(DisplayName = "プレイヤー攻撃"),
     PlayerDamage   UMETA(DisplayName = "プレイヤーダメージ"),
     EnemyDamage    UMETA(DisplayName = "敵ダメージ"),
 };
@@ -40,6 +43,9 @@ struct FSoundEntry
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     float Pitch = 1.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    bool bLoop = false;
 };
 
 UCLASS(BlueprintType)

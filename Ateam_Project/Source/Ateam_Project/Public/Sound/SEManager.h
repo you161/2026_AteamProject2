@@ -19,11 +19,16 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	//敵
+	//SE再生
 	void PlaySE(ESEType Type);
+	//SE停止
+	void StopSE(ESEType Type);
 
 protected:
 	//サウンドデータ
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundData")
 	TObjectPtr<USoundData> SoundData = nullptr;
+	//ループ用
+	UPROPERTY()
+	TMap<ESEType, TObjectPtr<UAudioComponent>> LoopingSEData;
 };
