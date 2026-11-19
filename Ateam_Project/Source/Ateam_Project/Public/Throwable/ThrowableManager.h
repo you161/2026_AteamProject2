@@ -59,7 +59,7 @@ protected:
 private:
 	//現在持っているアイテム
 	UPROPERTY(Transient)
-	TObjectPtr<AThrowableObject> HeldItem = nullptr;
+	TObjectPtr<AThrowableObject> HeldObject = nullptr;
 	//入力管理を行うオブジェクト
 	UPROPERTY(Transient)
 	TObjectPtr<UInputManager> InputManager = nullptr;

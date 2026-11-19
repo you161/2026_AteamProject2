@@ -4,6 +4,8 @@
 #include "Throwable/ThrowableManager.h"
 #include "Player/PlayerPawn.h"
 #include "Enemy/EnemyActor.h"
+#include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 namespace
 {
@@ -23,6 +25,12 @@ AThrowableObject::AThrowableObject()
 	SetRootComponent(SphereCollision);
 	SphereCollision->InitSphereRadius(DefaultCollisionRadius);
 	SphereCollision->SetCollisionProfileName(ThrowableCollisionProfile);
+
+	//メッシュを生成してルートにアタッチする
+	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
+	MeshComponent->SetupAttachment(SphereCollision);
+	//当たり判定はSphereCollisionが担当するのでメッシュ側は無効にする
+	MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AThrowableObject::BeginPlay()
@@ -148,6 +156,58 @@ void AThrowableObject::UpdateHeldLocation()
 	NewOffset.Z = FMath::Max(ThrowableData->Offset.Z, -PlayerHalfHeight + ItemRadius);
 
 	SetActorRelativeLocation(NewOffset);
+}
+
+//回収数に合わせて持っている間の色を更新する
+void AThrowableObject::UpdateHeldColor(int32 CollectedCount)
+{
+	if (CurrentState != EThrowableState::Held)
+	{
+		UE_LOG(LogThrowable, Warning, TEXT("[%s] UpdateHeldColor skipped: state is not Held"), *GetName());
+		return;
+	}
+
+	if (!IsValid(ThrowableData))
+	{
+		UE_LOG(LogThrowable, Error, TEXT("ThrowableData is null in AThrowableObject::UpdateHeldColor"));
+		return;
+	}
+
+	if (ThrowableData->StackColors.IsEmpty())
+	{
+		UE_LOG(LogThrowable, Warning, TEXT("[%s] UpdateHeldColor skipped: StackColors is empty"), *GetName());
+		return;
+	}
+
+	if (!IsValid(MeshComponent))
+	{
+		UE_LOG(LogThrowable, Error, TEXT("MeshComponent is null in AThrowableObject::UpdateHeldColor"));
+		return;
+	}
+
+	//個数に対応する色を選ぶ
+	const int32 ColorIndex = FMath::Clamp(CollectedCount - 1, 0, ThrowableData->StackColors.Num() - 1);
+	const FLinearColor& NewColor = ThrowableData->StackColors[ColorIndex];
+
+	const int32 MaterialCount = MeshComponent->GetNumMaterials();
+	
+	for (int32 i = 0; i < MaterialCount; ++i)
+	{
+		//すでに動的マテリアルならそれを使い、なければ作成する
+		UMaterialInstanceDynamic* DynamicMaterial = Cast<UMaterialInstanceDynamic>(MeshComponent->GetMaterial(i));
+		if (!IsValid(DynamicMaterial))
+		{
+			DynamicMaterial = MeshComponent->CreateAndSetMaterialInstanceDynamic(i);
+		}
+
+		if (!IsValid(DynamicMaterial))
+		{
+			UE_LOG(LogThrowable, Error, TEXT("[%s] Failed to create dynamic material at slot %d"), *GetName(), i);
+			continue;
+		}
+
+		DynamicMaterial->SetVectorParameterValue(ThrowableData->ColorParameterName, NewColor);
+	}
 }
 
 //投げられて指定方向に飛んでいく処理

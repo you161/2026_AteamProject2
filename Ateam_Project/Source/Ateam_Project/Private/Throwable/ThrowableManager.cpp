@@ -50,10 +50,10 @@ bool AThrowableManager::PickUp(AThrowableObject* Target)
 		return false;
 	}
 
-	if (!IsValid(HeldItem))
+	if (!IsValid(HeldObject))
 	{
-		HeldItem = Target;
-		HeldItem->OnPickedUp(Player);
+		HeldObject = Target;
+		HeldObject->OnPickedUp(Player);
 	}
 	else
 	{
@@ -61,7 +61,8 @@ bool AThrowableManager::PickUp(AThrowableObject* Target)
 	}
 
 	++CollectedCount;
-	HeldItem->UpdateHeldScale(CollectedCount);
+	HeldObject->UpdateHeldScale(CollectedCount);
+	HeldObject->UpdateHeldColor(CollectedCount);
 	return true;
 }
 
@@ -96,7 +97,7 @@ void AThrowableManager::InitializeInputManager()
 //投擲入力が来た時の処理
 void AThrowableManager::HandleInteract()
 {
-	if (IsValid(HeldItem))
+	if (IsValid(HeldObject))
 	{
 		Throw();
 	}
@@ -105,14 +106,14 @@ void AThrowableManager::HandleInteract()
 //持っているアイテムを投げる
 void AThrowableManager::Throw()
 {
-	if (!IsValid(HeldItem) || !IsValid(Player))
+	if (!IsValid(HeldObject) || !IsValid(Player))
 	{
 		return;
 	}
 
 	//投げた時の個数はアイテム自身に持たせる
-	HeldItem->OnThrown(Player->GetActorForwardVector(), CollectedCount);
-	HeldItem = nullptr;
+	HeldObject->OnThrown(Player->GetActorForwardVector(), CollectedCount);
+	HeldObject = nullptr;
 	CollectedCount = 0;
 
 	//投げたことを通知する

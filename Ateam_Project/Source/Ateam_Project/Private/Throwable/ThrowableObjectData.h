@@ -36,4 +36,11 @@ public:
 	//移動中の回転速度
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwable|回転速度")
 	FRotator RotateSpeed = FRotator(0.0f, 180.0f, 0.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwable|Color")
+	TArray<FLinearColor> StackColors = {};
+
+	//マテリアル側のカラーパラメータ名
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwable|Color")
+	FName ColorParameterName = TEXT("Color");
 };

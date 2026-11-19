@@ -9,6 +9,7 @@ class USphereComponent;
 class UThrowableObjectData;
 class AThrowableManager;
 class APlayerPawn;
+class UStaticMeshComponent;
 
 /**
  * 投げることができるアイテム。
@@ -33,6 +34,8 @@ public:
 	void OnThrown(const FVector& Direction, int32 StackCount);
 	//持たれている状態かどうかを返す
 	bool IsHeld() const { return CurrentState == EThrowableState::Held; }
+	//回収数に合わせて持っている間の色を更新する
+	void UpdateHeldColor(int32 CollectedCount);
 
 protected:
 	virtual void BeginPlay() override;
@@ -66,6 +69,9 @@ protected:
 	//投げれるオブジェクトのデータ
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ThrowableObject|Data")
 	TObjectPtr<UThrowableObjectData> ThrowableData = nullptr;
+	//メッシュ
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ThrowableObject|Mesh")
+	TObjectPtr<UStaticMeshComponent> MeshComponent = nullptr;
 
 private:
 	//現在の状態
