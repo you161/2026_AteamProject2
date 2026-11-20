@@ -48,44 +48,42 @@ void UHitPointBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
     if (!bIsImageFound) return;
 
-
     if (bIsShake)
     {
         countTime += InDeltaTime;
 
-        FVector2D CanvLocation = GetRenderTransform().Translation;
-
-        CanvLocation.X = FMath::RandRange(-ShakeRange, ShakeRange);
-        CanvLocation.Y = FMath::RandRange(-ShakeRange, ShakeRange);
-
-        if (countTime > ShakeTime)
+        FVector2D CanvLocation = FVector2D::ZeroVector;
+        if (countTime <= ShakeTime)
         {
-            CanvLocation.ZeroVector;
+            CanvLocation.X = FMath::RandRange(-ShakeRange, ShakeRange);
+            CanvLocation.Y = FMath::RandRange(-ShakeRange, ShakeRange);
+        }
+        else
+        {
             bIsShake = false;
         }
-
         CanvasPanel->SetRenderTranslation(CanvLocation);
-        return;
+        //returnしない、ダメージバーの縮小を止めない
     }
 
-    // HPが減ったら
+    //ダメージバーを追従させる
     if (damageSize.X > currentSize.X)
     {
         damageSize.X = FMath::Max(currentSize.X, damageSize.X - MoveSpeed * InDeltaTime);
         damageBar->SetRenderScale(damageSize);
-
-        //縮み終わった瞬間 かつ HPが0なら、一度だけ通知
-        if (damageSize.X <= currentSize.X && currentSize.X <= 0.0f && !bIsEmptyNotified)
-        {
-            bIsEmptyNotified = true;
-            OnHPBarEmptied.Broadcast(this);
-        }
     }
-    
-    // HPが増えたら
+
+    //空になりきったか
+    if (!bIsEmptyNotified && currentSize.X <= 0.0f && damageSize.X <= 0.0f)
+    {
+        bIsEmptyNotified = true;
+        OnHPBarEmptied.Broadcast(this);
+    }
+
+    //回復処理
     if (healSize.X > currentSize.X)
     {
-        currentSize.X = FMath::Min(healSize.X, currentSize.X - MoveSpeed * InDeltaTime);
+        currentSize.X = FMath::Min(healSize.X, currentSize.X + MoveSpeed * InDeltaTime);
         currentBar->SetRenderScale(currentSize);
     }
 }
@@ -100,20 +98,24 @@ void UHitPointBar::UpdateHitPointBar(float MaxHP, float Damage)
 
     float param = FMath::Min(1.0f, FMath::Max(0.0f, Damage / MaxHP));
 
-    // HPが減る
-    if (currentSize.X > 1.0f - param)
+    const float Target = 1.0f - param;
+
+    //HPが減る
+    if (currentSize.X > Target)
     {
         countTime = 0.0f;
         bIsShake = true;
-        currentSize.X = 1.0f - param;
+        currentSize.X = Target;
         currentBar->SetRenderScale(currentSize);
     }
-    // HPが増える
-    else
+    //HPが増える
+    else if (currentSize.X < Target)
     {
-        damageSize.X = 1.0f - param;
+        damageSize.X = Target;
         damageBar->SetRenderScale(damageSize);
     }
-    healSize.X = 1.0f - param;
+
+    //同値なら何もしない
+    healSize.X = Target;
     healBar->SetRenderScale(healSize);
 }
