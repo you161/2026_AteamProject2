@@ -129,23 +129,26 @@ void AChangeLevel::NextLevel()
 		return;
 	}
 
-	switch (LevelName) {
+	switch (NextLevelName) {
 	case LevelSeed::None:
-		UE_LOG(LogTemp, Error, TEXT("LevelName is not set in ChangeLevel"));
 		break;
 	case LevelSeed::TitleLevel:
-		LevelManager->LoadMovieLevel();
+		LevelManager->LoadTitleLevel();
 		break;
 	case LevelSeed::MovieLevel:
-		LevelManager->LoadMainLevel();
+		LevelManager->LoadMovieLevel();
 		break;
 	case LevelSeed::MainLevel:
+		LevelManager->LoadMainLevel();
 		break;
 	case LevelSeed::ClearLevel:
-		LevelManager->LoadTitleLevel();
+		LevelManager->LoadClearLevel();
 		break;
 	case LevelSeed::GameOverLevel:
-		LevelManager->LoadTitleLevel();
+		LevelManager->LoadGameOverLevel();
+		break;
+	case LevelSeed::QUIT:
+		UE_LOG(LogTemp, Warning, TEXT("Game is Quit."));
 		break;
 	}
 }
@@ -158,20 +161,26 @@ void AChangeLevel::PreviousLevel()
 		return;
 	}
 
-	switch (LevelName) {
+	switch (PrevLevelName) {
 	case LevelSeed::None:
-		UE_LOG(LogTemp, Error, TEXT("LevelName is not set in ChangeLevel"));
 		break;
 	case LevelSeed::TitleLevel:
-		UE_LOG(LogTemp, Warning, TEXT("QUIT is Game"));
+		LevelManager->LoadTitleLevel();
 		break;
 	case LevelSeed::MovieLevel:
+		LevelManager->LoadMovieLevel();
 		break;
 	case LevelSeed::MainLevel:
+		LevelManager->LoadMainLevel();
 		break;
 	case LevelSeed::ClearLevel:
+		LevelManager->LoadClearLevel();
 		break;
 	case LevelSeed::GameOverLevel:
+		LevelManager->LoadGameOverLevel();
+		break;
+	case LevelSeed::QUIT:
+		UE_LOG(LogTemp, Warning, TEXT("Game is Quit."));
 		break;
 	}
 }
