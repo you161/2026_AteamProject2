@@ -34,18 +34,20 @@ void AHealthManager::BeginPlay()
 	if (!IsValid(ThrowableManager))
 	{
 		UE_LOG(LogHealth, Error, TEXT("ThrowableManager is null in AHealthManager::BeginPlay"));
-		return;
 	}
-
-	ThrowableManager->OnHitEnemy.AddUObject(this, &AHealthManager::HandleThrowableHitEnemy);
+	else
+	{
+		ThrowableManager->OnHitEnemy.AddUObject(this, &AHealthManager::HandleThrowableHitEnemy);
+	}
 
 	if (!IsValid(EnemyManager))
 	{
 		UE_LOG(LogHealth, Error, TEXT("ThrowableManager is null in EnemyManager::BeginPlay"));
-		return;
 	}
-
-	EnemyManager->OnHitPlayer.AddUObject(this, &AHealthManager::HandleEnemyHitPlayer);
+	else
+	{
+		EnemyManager->OnHitPlayer.AddUObject(this, &AHealthManager::HandleEnemyHitPlayer);
+	}
 }
 
 void AHealthManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -61,6 +63,11 @@ void AHealthManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		{
 			Bar->OnHPBarEmptied.RemoveAll(this);
 		}
+	}
+
+	if (IsValid(EnemyManager))
+	{
+		EnemyManager->OnHitPlayer.RemoveAll(this);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -192,13 +199,13 @@ void AHealthManager::OnHPBarEmptied(UHitPointBar* EmptiedBar)
 		return;
 	}
 
-	bIsGameFinished = true;
-
 	if (!IsValid(GameJudge))
 	{
 		UE_LOG(LogHealth, Error, TEXT("GameJudge is null in AHealthManager::OnHPBarEmptied"));
 		return;
 	}
+
+	bIsGameFinished = true;
 
 	if (EmptiedBar == HitPointBars[ToIndex(ECharacterType::Player)].Get())
 	{
