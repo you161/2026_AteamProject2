@@ -18,7 +18,8 @@ enum class LevelSeed : uint8 {
 	MovieLevel,
 	MainLevel,
 	ClearLevel,
-	GameOverLevel
+	GameOverLevel,
+	QUIT
 };
 
 /**
@@ -45,9 +46,13 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LevelManager", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<ALevelManager> LevelManagerClass = nullptr;
 
-	// レベルの種類
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "LevelManager", meta = (AllowPrivateAccess = "true"))
-	LevelSeed LevelName = LevelSeed::None;
+	// 次のレベルの種類
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level|Next", meta = (AllowPrivateAccess = "true"))
+	LevelSeed NextLevelName = LevelSeed::None;
+
+	// 前のレベルの種類
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level|Previous", meta = (AllowPrivateAccess = "true"))
+	LevelSeed PrevLevelName = LevelSeed::None;
 
 	// 入力マッピングコンテキスト
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
