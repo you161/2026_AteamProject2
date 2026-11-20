@@ -310,6 +310,11 @@ void APlayerPawn::OnDamaged(ECharacterType DamagedType, int32 DamageLevel)
 	{
 		DamageFlashComponent->PlayFlash();
 	}
+
+	if (IsValid(SEManager))
+	{
+		SEManager->PlaySE(ESEType::PlayerDamage);
+	}
 }
 //オブジェクトを投げた通知を受け取りアニメーションクラスに通知を飛ばす
 void APlayerPawn::HandleThrowStarted()
