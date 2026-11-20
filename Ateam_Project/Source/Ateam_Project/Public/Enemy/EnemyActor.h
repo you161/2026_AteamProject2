@@ -86,6 +86,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Speed")
 	float AngleSpeed = 0.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|OffsetZ")
+	float OffsetZ = 0.0f;
+
 	UFUNCTION()
 	void OnOverlapBegin(
 		UPrimitiveComponent* OverlappedComp,

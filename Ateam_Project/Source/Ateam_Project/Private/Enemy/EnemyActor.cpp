@@ -196,7 +196,7 @@ void AEnemyActor::SetAttackActor()
 				{
 					AttackLocation.Y *= -1;
 				}
-				AttackLocation.Z = FMath::RandRange(0.0, EnemyData->AttackDistance.Z);
+				AttackLocation.Z = OffsetZ + FMath::RandRange(0.0, EnemyData->AttackDistance.Z);
 				TurnMoveArray.Add(GetWorld()->SpawnActor<ATurnMoveActor>(TurnMoveActor, FTransform(GetActorLocation() + AttackLocation), SpawnParams));
 			}
 
