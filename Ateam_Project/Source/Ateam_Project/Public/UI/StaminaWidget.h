@@ -1,11 +1,10 @@
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "StaminaWidget.generated.h"
 
-class UProgressBar;
+class UImage;
 class AStaminaManager;
 
 UCLASS()
@@ -19,6 +18,7 @@ public:
 	void SetStaminaManager(AStaminaManager* InManager);
 
 protected:
+	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 
 private:
@@ -27,7 +27,7 @@ private:
 
 	//スタミナ表示UI
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> StaminaBar = nullptr;
+	TObjectPtr<UImage> StaminaImage = nullptr;
 	//通常色
 	UPROPERTY(EditAnywhere, Category = "Stamina")
 	FLinearColor NormalColor = FLinearColor::Yellow;

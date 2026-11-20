@@ -1,7 +1,17 @@
-
 #include "UI/StaminaWidget.h"
 #include "Player/StaminaManager.h"
-#include "Components/ProgressBar.h"
+#include "Components/Image.h"
+
+void UStaminaWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	//左端を基準に縮むようにピボットを左中央に設定する
+	if (IsValid(StaminaImage))
+	{
+		StaminaImage->SetRenderTransformPivot(FVector2D(0.0f, 0.5f));
+	}
+}
 
 void UStaminaWidget::SetStaminaManager(AStaminaManager* InManager)
 {
@@ -36,12 +46,13 @@ void UStaminaWidget::NativeDestruct()
 
 void UStaminaWidget::HandleStaminaChanged(float Ratio, bool bCanSprint)
 {
-	if (!IsValid(StaminaBar))
+	if (!IsValid(StaminaImage))
 	{
 		return;
 	}
 
-	StaminaBar->SetPercent(Ratio);
+	//横スケールで残量を表現する
+	StaminaImage->SetRenderScale(FVector2D(FMath::Clamp(Ratio, 0.0f, 1.0f), 1.0f));
 	//枯渇してダッシュできない間は色を変える
-	StaminaBar->SetFillColorAndOpacity(bCanSprint ? NormalColor : ExhaustedColor);
+	StaminaImage->SetColorAndOpacity(bCanSprint ? NormalColor : ExhaustedColor);
 }
