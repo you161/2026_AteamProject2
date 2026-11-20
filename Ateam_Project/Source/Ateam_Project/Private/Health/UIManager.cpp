@@ -14,60 +14,61 @@ AUIManager::AUIManager()
 
 void AUIManager::BeginPlay()
 {
-	Super::BeginPlay();	
+	Super::BeginPlay();
 
-	if (PlayerHPBarClass)
+	UHitPointBar* PlayerBar = nullptr;
+	UHitPointBar* EnemyBar = nullptr;
+	UStaminaWidget* StaminaWidget = nullptr;
+
+	for (FWidgetEntry Entry : WidgetEntry)
 	{
-		PlayerHPBar = CreateWidget<UHitPointBar>(GetWorld(), PlayerHPBarClass);
-		if (PlayerHPBar)
+		if (!IsValid(Entry.WidgetClass))
 		{
-			PlayerHPBar->AddToViewport();
+			UE_LOG(LogTemp, Warning, TEXT("WidgetEntry is not set WidgetClass in UIManager"));
+			return;
+		}
+
+		UUserWidget* Created = CreateWidget<UUserWidget>(GetWorld(), Entry.WidgetClass);
+		Created->AddToViewport();
+		SpawnedWidgets.Add(Created);
+
+		switch (Entry.WidgetType)
+		{
+		case EWidgetType::UserWidget:
+			break;
+			
+		case EWidgetType::PlayerHBar:
+			PlayerBar = Cast<UHitPointBar>(Created);
+			break;
+
+		case EWidgetType::EnemyHPBar:
+			EnemyBar = Cast<UHitPointBar>(Created);
+			break;
+
+		case EWidgetType::Stamina:
+			StaminaWidget = Cast<UStaminaWidget>(Created);
+			break;
 		}
 	}
-	if (EnemyHPBarClass)
+
+	if(IsValid(HealthManager) && IsValid(PlayerBar) && IsValid(EnemyBar))
 	{
-		EnemyHPBar = CreateWidget<UHitPointBar>(GetWorld(), EnemyHPBarClass);
-		if (EnemyHPBar)
-		{
-			EnemyHPBar->AddToViewport();
-		}
+		HealthManager->InitializeHealth(PlayerBar, EnemyBar);
 	}
 
-	if(IsValid(HealthManager))
+	if (IsValid(StaminaManager) && IsValid(StaminaWidget))
 	{
-		HealthManager->InitializeHealth(PlayerHPBar, EnemyHPBar);
-	}
-
-	if (StaminaWidgetClass)
-	{
-		StaminaWidget = CreateWidget<UStaminaWidget>(GetWorld(), StaminaWidgetClass);
-		if (IsValid(StaminaWidget) && IsValid(StaminaManager))
-		{
-			StaminaWidget->AddToViewport();
-			StaminaWidget->SetStaminaManager(StaminaManager);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("StaminaWidget or StaminaManager is not valid in UIManager."));
-		}
+		StaminaWidget->SetStaminaManager(StaminaManager);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("StaminaWidgetClass is not set in UIManager."));
+		UE_LOG(LogTemp, Warning, TEXT("StaminaWidget or StaminaManager is not valid in UIManager."));
+
 	}
 }
 
 void AUIManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
 
-TObjectPtr<UHitPointBar> AUIManager::GetPlayerHPBar()
-{
-	return PlayerHPBar;
-}
-
-TObjectPtr<UHitPointBar> AUIManager::GetEnemyHPBar()
-{
-	return EnemyHPBar;
 }

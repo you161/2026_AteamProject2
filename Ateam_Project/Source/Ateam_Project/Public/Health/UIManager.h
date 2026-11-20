@@ -11,6 +11,27 @@ class AHealthManager;
 class UStaminaWidget;
 class AStaminaManager;
 
+UENUM(BlueprintType)
+enum class EWidgetType : uint8
+{
+	UserWidget = 0,
+	PlayerHBar,
+	EnemyHPBar,
+	Stamina
+};
+
+USTRUCT(BlueprintType)
+struct FWidgetEntry
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EWidgetType WidgetType = EWidgetType::UserWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<UUserWidget> WidgetClass = nullptr;
+};
+
 UCLASS()
 class ATEAM_PROJECT_API AUIManager : public AActor
 {
@@ -19,37 +40,20 @@ class ATEAM_PROJECT_API AUIManager : public AActor
 public:	
 	AUIManager();
 
-	TObjectPtr<UHitPointBar> GetPlayerHPBar();
-	TObjectPtr<UHitPointBar> GetEnemyHPBar();
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UHitPointBar> PlayerHPBarClass;
-
-	UPROPERTY()
-	TObjectPtr<UHitPointBar> PlayerHPBar;
-
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UHitPointBar> EnemyHPBarClass;
-
-	UPROPERTY()
-	TObjectPtr<UHitPointBar> EnemyHPBar;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HealthManager")
 	TObjectPtr<AHealthManager> HealthManager = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "UI")
-	TSubclassOf<UStaminaWidget> StaminaWidgetClass = nullptr;
-
-	UPROPERTY()
-	TObjectPtr<UStaminaWidget> StaminaWidget = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "StaminaManager")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "StaminaManager")
 	TObjectPtr<AStaminaManager> StaminaManager = nullptr;
 
-public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TArray<FWidgetEntry> WidgetEntry = {};
+
+private:
+	TArray<TObjectPtr<UUserWidget>> SpawnedWidgets = {};
 
 };
