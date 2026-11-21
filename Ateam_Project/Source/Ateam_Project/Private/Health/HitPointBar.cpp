@@ -46,6 +46,7 @@ void UHitPointBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
 
+
     if (!bIsImageFound) return;
 
     if (bIsShake)
@@ -63,11 +64,10 @@ void UHitPointBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
             bIsShake = false;
         }
         CanvasPanel->SetRenderTranslation(CanvLocation);
-        //returnしない、ダメージバーの縮小を止めない
     }
 
     //ダメージバーを追従させる
-    if (damageSize.X > currentSize.X)
+    if (!bIsShake && damageSize.X > currentSize.X)
     {
         damageSize.X = FMath::Max(currentSize.X, damageSize.X - MoveSpeed * InDeltaTime);
         damageBar->SetRenderScale(damageSize);
