@@ -58,6 +58,8 @@ private:
 	void UpdateHeldRotation(float DeltaTime);
 	//アイテムの大きさに合わせて持つ位置を更新する
 	void UpdateHeldLocation();
+	//敵に当たった時の処理
+	void HitEnemy();
 
 protected:
 	//当たり判定
@@ -70,7 +72,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ThrowableObject|Data")
 	TObjectPtr<UThrowableObjectData> ThrowableData = nullptr;
 	//メッシュ
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ThrowableObject|Mesh")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ThrowableObject|Mesh")
 	TObjectPtr<UStaticMeshComponent> MeshComponent = nullptr;
 
 private:

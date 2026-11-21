@@ -114,6 +114,15 @@ void AThrowableObject::OnThrown(const FVector& Direction, int32 StackCount)
 	CurrentDirection = Direction.GetSafeNormal();
 	ThrowStackCount = StackCount;
 	ThrowStartLocation = GetActorLocation();
+
+	//投げた時点ですでに敵と重なっていたらヒット扱いにする
+	TArray<AActor*> OverlappingActors;
+	SphereCollision->GetOverlappingActors(OverlappingActors, AEnemyActor::StaticClass());
+
+	if (!OverlappingActors.IsEmpty())
+	{
+		HitEnemy();
+	}
 }
 
 //持たれている間の回転処理
@@ -235,6 +244,19 @@ void AThrowableObject::UpdateThrownMovement(float DeltaTime)
 	}
 }
 
+//敵に当たった時の処理
+void AThrowableObject::HitEnemy()
+{
+	if (IsValid(ThrowableManager))
+	{
+		ThrowableManager->NotifyHitEnemy(ThrowStackCount);
+	}
+
+	//同じフレームに複数回当たらないようにする
+	SetActorEnableCollision(false);
+	Destroy();
+}
+
 //他のアクタと重なった時に呼ばれる
 void AThrowableObject::OnOverlap(
 	UPrimitiveComponent* OverlappedComp,
@@ -274,13 +296,7 @@ void AThrowableObject::OnOverlap(
 	//投げられている間に敵と重なったら当たったことを通知して消える
 	if (CurrentState == EThrowableState::Thrown && OtherActor->IsA<AEnemyActor>())
 	{
-		if (IsValid(ThrowableManager))
-		{
-			ThrowableManager->NotifyHitEnemy(ThrowStackCount);
-		}
-
-		//同じフレームに複数回当たらないようにする
-		SetActorEnableCollision(false);
-		Destroy();
+		HitEnemy();
+		return;
 	}
 }
